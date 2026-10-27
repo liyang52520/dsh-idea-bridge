@@ -1,0 +1,47 @@
+# DSH_HOME=/var/folders/g3/mnyb6bnn0cz4z5p006dcnmjr0000gn/T/idea-bridge-claim-rnHp9b
+PASS  two concurrent claims: exactly one wins
+PASS  two concurrent claims: both answered 200
+PASS  three concurrent claims over 20 ids partition them exactly
+PASS  no id is granted twice
+PASS  four OS processes: every id claimed exactly once
+PASS  first claim granted
+PASS  .json is untouched by the claim
+PASS  a claimed-but-unacked message is still listed
+PASS  the other instance is refused
+PASS  the refusing instance created no second marker
+PASS  claim marker mode is 0600
+PASS  claim marker content names a pid
+PASS  claim refused when the message is gone
+PASS  no marker is left for a message that does not exist
+PASS  duplicate ids in one request are granted once
+PASS  non-string ids -> 400
+PASS  missing "ids" -> 400
+PASS  oversized claim body -> 413
+PASS  path-traversal id refused, nothing created
+PASS  no file escaped the inbox
+PASS  ack of an orphan marker removes it and counts once
+PASS  orphan marker deleted
+PASS  ack of a never-claimed message still removes it
+PASS  never-claimed message deleted
+PASS  repeat ack is idempotent
+PASS  ack of a traversal id does nothing
+PASS  sweeper recycles an expired claim marker
+PASS  sweeper keeps the fresh message
+PASS  the message can be claimed again after the marker expired
+PASS  expired message and marker are both recycled
+PASS  an expired id is no longer listed
+PASS  an expired id can no longer be claimed
+PASS  sweeper keeps a fresh marker
+PASS  claim against a missing inbox claims nothing
+PASS  claim recreates the inbox
+PASS  claim/ack race ends in one of the two safe states
+PASS  no files survive the race cleanup
+PASS  claim against a read-only inbox does not throw
+PASS  claim against a read-only inbox grants nothing
+PASS  claim against a read-only inbox leaves no marker
+PASS  rejected claim -> 401 and no marker
+PASS  no marker under the guarded home
+
+# inbox left: (empty)
+
+# summary: 42 passed, 0 failed

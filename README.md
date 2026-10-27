@@ -1,13 +1,18 @@
 # DeepSeek Harness for IntelliJ IDEA
 
-把 DeepSeek Harness 智能体工作台完整嵌入 IntelliJ IDEA，提供类 Qoder 的 AI 编程体验：
-在 IDE 内嵌的 Web 界面中与智能体对话，让它读写你的项目文件，通过进程内 MCP 工具获取 IDE 上下文，
-并用原生 diff 工具审查/还原它的改动。
+> 仓库 `dsh-idea-bridge` 同时容纳桥的两半：`idea-plugin/`（IntelliJ 插件）与
+> `dsh-plugin/`（DSH 侧插件，npm 包名 `@local/dsh-idea-bridge`）。
+> This repository hosts both halves of the bridge: `idea-plugin/` (the IntelliJ plugin) and
+> `dsh-plugin/` (the DSH-side plugin, npm package `@local/dsh-idea-bridge`).
 
-Embed the [DeepSeek Harness](https://github.com/deepseek-ai) AI agent workbench directly inside
-IntelliJ IDEA for a Qoder-like AI coding experience: chat with the agent in an embedded web UI,
-let it read and modify your project files, expose IDE context via an in-process MCP endpoint,
-and review/restore its changes with native diff tooling.
+**只做一件事**：把你在 IntelliJ IDEA 中选中的代码，以固定引用格式
+`@/path/File.kt#L10-20` 发送到**你已经打开着的** DeepSeek Harness（桌面客户端或网页）。
+
+> v2.0.0 起战略收敛：插件**不再**启动、内嵌或管理任何 DSH 进程，不再有内嵌 Web UI、
+> IDE MCP 端点、评审/快照、服务商配置与凭据同步。约 7000 行 → 约 600 行。
+
+One job only: send the code you selected in IntelliJ IDEA to the DeepSeek Harness window you
+already have open, as the fixed reference `@/path/File.kt#L10-20`.
 
 > 声明 / Disclaimer：本插件非 DeepSeek 官方产品；DeepSeek Harness 与 DeepSeek 商标归其各自所有者。
 > This plugin is not an official DeepSeek product; DeepSeek Harness and the DeepSeek trademark belong
@@ -15,19 +20,67 @@ and review/restore its changes with native diff tooling.
 
 ---
 
-## 功能特性 / Features
+## 工作原理 / How it works
 
-- **发送选中代码 / Send selection to DSH** — 右键选中代码发送紧凑文件引用（`@路径#L1-14`）；完整代码可随时被智能体拉取（剪贴板兜底）。
-- **运行日志一键解释 / One-click log explanation** — 在项目运行控制台选中一段日志，右键"DSH 一键解释"，自动把解释请求 + 日志提交给 DSH（无需手动粘贴/回车）。
-- **多服务商支持 / Multi-provider support** — 除内置 DeepSeek 外，支持添加自定义服务商（OpenAI、Anthropic 等兼容 API），可为每个服务商配置多个模型，支持从 API 端点一键拉取模型列表。
-- **审查与还原 / Review & restore** — 基线快照 + 原生 diff（修改/新增/删除），支持还原单个/全部、忽略、重新基线。
-- **进程内 MCP IDE 工具 / IDE context via in-process MCP** — 智能体可通过 `mcp__ide__*` 工具读取当前选中代码、打开的文件、项目树，并打开/定位文件；MCP 终结点与 IDE 同 JVM 进程（无独立翻译进程、随机 token 鉴权）。
+```
+IDEA 插件 (idea-plugin/)            文件系统                        DSH 侧插件 (dsh-plugin/)
+Ctrl+Alt+K  ──写一条 JSON──▶  ~/.dsh/idea-bridge/inbox/*.json  ──▶  host 半：GET /idea-bridge/pending
+                                                                     client 半：写进 composer（可自动提交）
+```
+
+IDEA 插件只往收件箱写一个很小的 JSON 文件（原子写、0600），不读凭据、不伪造 cookie、不调用
+DSH 内部 API、不启动任何进程。DSH 侧插件用 DSH 自己的公开扩展点（`ctx.webServer.register`
+与 `ctx.slots`）读取并投递。完整字段级契约见 [docs/idea-bridge-contract.md](docs/idea-bridge-contract.md)。
+
+## 安装 / Install
+
+1. **IDEA 侧**：
+   ```bash
+   cd idea-plugin
+   ./gradlew buildPlugin -PlocalIdePath="/Applications/IntelliJ IDEA.app/Contents"
+   ```
+   然后 Settings → Plugins → ⚙ → Install Plugin from Disk 选择
+   `idea-plugin/build/distributions/dsh-idea-plugin-*.zip`。
+2. **DSH 侧**：按 [dsh-plugin/README.md](dsh-plugin/README.md) 把桥接插件 link 进你的
+   DSH profile（桌面客户端与网页 profile 各一次），重启 DeepSeek Harness。
+3. 在 DeepSeek Harness 里打开与 IDEA 相同的项目目录；在 IDEA 中选中代码按 **Ctrl+Alt+K**。
+
+## 设置 / Settings
+
+Settings → Tools → DeepSeek Harness：自动提交（默认**关**——只填草稿，你自己补一句话再回车）、
+发送后聚焦 DSH 窗口（默认开）、收件箱目录覆盖（默认从 `~/.dsh/idea-bridge/location.json` 自动解析）。
+
+任何环节失败都会把引用复制到剪贴板，保证内容不丢。
 
 ## 环境要求 / Requirements
 
-- IntelliJ IDEA Community / Ultimate **2024.1 – 2026.2**（build 241 – 262；Windows 10/11 x64、macOS arm64/x64、Linux x64）
-- 持有 DeepSeek API Key（`deepseek-chat` / `deepseek-reasoner`），或自定义服务商的 API Key
-- 本机已安装 **Node.js** 与 **DeepSeek Harness**（`npm i -g @deepseek-ai/dsh`），并在插件设置中填入两者的路径（Node.js 可执行文件 与 `…/@deepseek-ai/dsh/lib/bin.js`）。
+- IntelliJ IDEA Community / Ultimate **2024.1 – 2026.2**（build 241 – 262）
+- 本机已安装并**正在运行** DeepSeek Harness，且已安装配套的 `dsh-idea-bridge` 插件
+- 不需要在插件里配置 Node.js / DSH 路径，也不需要 API Key
+
+## 开发 / Development
+
+```bash
+cd idea-plugin
+./gradlew test buildPlugin --console=plain --no-daemon \
+  -PlocalIdePath="/Applications/IntelliJ IDEA.app/Contents"
+```
+
+DSH 侧插件是纯 ESM JavaScript，没有构建步骤（改完源码重启 DSH 即可，见
+[dsh-plugin/README.md](dsh-plugin/README.md)）。字段级契约见
+[docs/idea-bridge-contract.md](docs/idea-bridge-contract.md)；独立验证脚本见
+[docs/verification/run-all.sh](docs/verification/run-all.sh)。
+
+## 仓库结构 / Repository layout
+
+```
+dsh-idea-bridge/
+├── idea-plugin/    # IntelliJ 插件（Gradle 工程根：gradlew、build.gradle.kts、src/）
+├── dsh-plugin/     # DSH 侧插件（@local/dsh-idea-bridge；index.js / client.js / cordis.patch.yml）
+├── docs/           # 字段级契约（冻结）+ 独立验证报告与复现脚本
+├── AGENTS.md
+└── README.md
+```
 
 ## 许可 / License
 

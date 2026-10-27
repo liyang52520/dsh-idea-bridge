@@ -1,0 +1,118 @@
+<idea-plugin>
+    <id>com.yg.dsh.idea</id>
+    <name>DeepSeek Harness</name>
+    <vendor url="https://github.com/liyang52520/dsh-idea-bridge">YG</vendor>
+
+    <description><![CDATA[
+        <h3>English</h3>
+        <p>One job only: <b>send the code you selected in IntelliJ IDEA to the DeepSeek Harness
+        window you already have open</b>, in the fixed reference format <code>@/path/File.kt#L10-20</code>.</p>
+        <p>The plugin does <b>not</b> start, embed, or manage any DSH process — no Node.js path, no
+        provider API keys, no embedded browser. It writes one small JSON file into
+        <code>~/.dsh/idea-bridge/inbox</code>, and the companion DeepSeek Harness plugin
+        <code>dsh-idea-bridge</code> puts that reference into the composer of the session bound to
+        your project (and submits it, if you want).</p>
+
+        <h4>How to use</h4>
+        <ol>
+            <li>Install the companion <code>dsh-idea-bridge</code> plugin into your DeepSeek Harness
+            profile (see <code>dsh-idea-bridge/README.md</code>) and restart DeepSeek Harness.</li>
+            <li>Open your project in DeepSeek Harness (desktop client or the web UI) — the session
+            whose working directory is that project receives the references.</li>
+            <li>In IDEA, select code and press <b>Ctrl+Alt+K</b> (or right-click →
+            <i>Send Selection to DSH</i>). No selection sends a whole-file reference.</li>
+        </ol>
+
+        <h4>Behaviour</h4>
+        <ul>
+            <li>Pre-fills the DeepSeek Harness input box and leaves it there — you add your question and
+            press Enter. Turn on <b>Submit the message automatically</b> in
+            <b>Settings → Tools → DeepSeek Harness</b> if you want it sent immediately.</li>
+            <li>If anything goes wrong, the reference is copied to the clipboard so nothing is lost.</li>
+            <li>Bilingual UI (English / 简体中文).</li>
+        </ul>
+
+        <h3>中文</h3>
+        <p>只做一件事：把你在 IntelliJ IDEA 中选中的代码，以固定引用格式
+        <code>@/path/File.kt#L10-20</code> 发送到<b>你已经打开着的</b> DeepSeek Harness 窗口。</p>
+        <p>插件<b>不再</b>启动、内嵌或管理任何 DSH 进程——不需要 Node.js 路径、不需要服务商 API Key、
+        也不再内嵌浏览器。它只往 <code>~/.dsh/idea-bridge/inbox</code> 写一个很小的 JSON 文件，
+        由配套的 DSH 插件 <code>dsh-idea-bridge</code> 把这条引用写进"当前项目对应会话"的输入框
+        （按你的设置决定是否直接提交）。</p>
+
+        <h4>使用方法</h4>
+        <ol>
+            <li>先在你的 DeepSeek Harness profile 里安装配套插件 <code>dsh-idea-bridge</code>
+            （见 <code>dsh-idea-bridge/README.md</code>）并重启 DeepSeek Harness。</li>
+            <li>在 DeepSeek Harness（桌面客户端或网页）里打开同一个项目——工作目录与该项目的
+            会话会接收引用。</li>
+            <li>在 IDEA 中选中代码，按 <b>Ctrl+Alt+K</b>（或右键 → <i>发送选中代码到 DSH</i>）。
+            没有选区时发送整文件引用。</li>
+        </ol>
+
+        <h4>行为说明</h4>
+        <ul>
+            <li>默认只把引用填进 DeepSeek Harness 输入框，你自己补一句话再回车；需要立即发送就在
+            <b>设置 → Tools → DeepSeek Harness</b> 勾上"自动提交"。</li>
+            <li>任何环节失败都会把引用复制到剪贴板，保证内容不丢。</li>
+            <li>中英双语界面。</li>
+        </ul>
+    ]]></description>
+
+    <change-notes><![CDATA[
+        <h3>English / 中文</h3>
+        <h4>v1.1.0</h4>
+        <ul>
+            <li>Draft by default: the reference is placed in the DeepSeek Harness input box and left
+            there — you add your question and press Enter. Auto-submit is now an opt-in setting.
+            默认只填输入框（草稿），你自己补话再回车；自动提交改为需要手动开启。</li>
+            <li>Strict project routing: a reference is delivered only to the session whose working
+            directory equals the project root, and when there is none the plugin now says so
+            (with a clipboard fallback) instead of pretending it was sent.
+            严格项目路由：只投给工作目录等于项目根的会话；没有这样的会话时会明确提示（并回退剪贴板），不再"假成功"。</li>
+        </ul>
+        <h4>v2.0.0</h4>
+        <ul>
+            <li>Pivot to a single feature: send the editor selection to the DeepSeek Harness instance
+            you already have open. The embedded web UI, the DSH process lifecycle, the IDE MCP
+            endpoint, review/snapshot tooling, provider settings and credential sync are all removed
+            (~7000 lines → ~600).
+            战略收敛为单一功能：把选中代码发送到你已经打开的 DeepSeek Harness。内嵌 Web UI、
+            DSH 进程管理、IDE MCP 端点、评审/快照、服务商配置与凭据同步全部删除（约 7000 行 → 约 600 行）。</li>
+        </ul>
+        <h4>v1.0.0</h4>
+        <ul>
+            <li>Initial release: embedded DeepSeek Harness web UI, send selection to DSH, review changes
+            with diff, bilingual UI (English / 简体中文).</li>
+        </ul>
+    ]]></change-notes>
+
+    <depends>com.intellij.modules.platform</depends>
+
+    <idea-version since-build="241" until-build="262.*"/>
+
+    <actions>
+        <!-- 唯一的用户入口：把编辑器选区/整文件以固定格式投递给已打开的 DSH -->
+        <action id="com.yg.dsh.idea.sendSelection"
+                class="com.yg.dsh.idea.ui.actions.SendSelectionAction"
+                text="Send Selection to DSH"
+                description="Send the current editor selection to the DeepSeek Harness window you already have open"
+                icon="/icons/deepseek-16.png">
+            <keyboard-shortcut keymap="$default" first-keystroke="ctrl alt K"/>
+            <add-to-group group-id="EditorPopupMenu" anchor="first"/>
+            <add-to-group group-id="Floating.CodeToolbar" anchor="last"/>
+        </action>
+    </actions>
+
+    <extensions defaultExtensionNs="com.intellij">
+        <applicationService serviceImplementation="com.yg.dsh.idea.bridge.BridgeSettings"/>
+
+        <!-- Settings → Tools → DeepSeek Harness：自动提交 / 聚焦窗口 / 收件箱目录 -->
+        <applicationConfigurable
+                parentId="tools"
+                id="com.yg.dsh.idea.settings.DshBridgeConfigurable"
+                displayName="DeepSeek Harness"
+                instance="com.yg.dsh.idea.settings.DshBridgeConfigurable"/>
+
+    </extensions>
+</idea-plugin>

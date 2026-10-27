@@ -1,0 +1,7 @@
+# claim route present before emulation: true
+# emulating a v1.0 host: /idea-bridge/claim now answers 404
+[dsh-idea-bridge] host has no /idea-bridge/claim (v1.0 host): delivering without single-flight. Restart DeepSeek Harness to load the v1.1 host half.
+# fetch sequence: GET /idea-bridge/pending, POST /idea-bridge/claim, POST /idea-bridge/ack, GET /idea-bridge/pending, GET /idea-bridge/pending, GET /idea-bridge/pending, GET /idea-bridge/pending, GET /idea-bridge/pending, GET /idea-bridge/pending, GET /idea-bridge/pending, GET /idea-bridge/pending
+# composer writes: [["insertText","@/Users/liyang/IdeaProjects/foo/src/Bar.kt#L10-20 "],["submit"]]
+# message still in the inbox: false
+PASS  the client still delivers without the claim route

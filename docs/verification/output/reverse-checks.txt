@@ -1,0 +1,11 @@
+$ grep -rn 'DshApiClient|ProcessManager|IdeMcpServer|DshSessionLauncher|PortParser|BrowserManager|JCEF' idea-plugin/src dsh-plugin idea-plugin/build.gradle.kts
+idea-plugin/build.gradle.kts:37:    // 见 docs/PROJECT_NOTES.md）。本插件不再使用 JCEF（内嵌浏览器已随战略收敛删除），
+
+$ grep -rn 'ProcessBuilder|Runtime.getRuntime|child_process|spawn(' idea-plugin/src dsh-plugin
+idea-plugin/src/main/kotlin/com/yg/dsh/idea/bridge/IdeaBridge.kt:202:            ProcessBuilder("open", "dsh://open")
+idea-plugin/src/main/kotlin/com/yg/dsh/idea/bridge/IdeaBridge.kt:203:                .redirectOutput(ProcessBuilder.Redirect.DISCARD)
+idea-plugin/src/main/kotlin/com/yg/dsh/idea/bridge/IdeaBridge.kt:204:                .redirectError(ProcessBuilder.Redirect.DISCARD)
+
+$ grep -rn 'credentials.yaml|/api/' idea-plugin/src dsh-plugin
+dsh-plugin/index.js:26: * It never reads credentials, never calls `/api/*`, never starts a process,
+dsh-plugin/README.md:21:`ctx.slots`），不读凭据、不伪造 cookie、不调 `/api/*`、不启动任何进程。详见文末「设计与依据」。

@@ -1,0 +1,61 @@
+PASS  client bundle registers one module
+PASS  client module id
+PASS  client module inject
+PASS  client module exposes apply()
+PASS  slots.inject name
+PASS  dock registration options
+PASS  registration order 15 does not collide with shipped cells (todo/0, goal/10, queue/20)
+PASS  no fetch before the 300ms first-poll delay
+PASS  first poll fires after the 800ms delay
+PASS  a 400ms poll interval is armed
+PASS  setDraft + submit happened once, with the contract text
+PASS  message file acknowledged and deleted
+PASS  ack followed the draft write
+PASS  the instance claimed before writing the draft
+PASS  no .claim marker is left behind after ack
+PASS  a delivered id is not delivered again on later ticks
+PASS  submit=false writes the draft without submitting
+PASS  a message for another project is not written
+PASS  a message for another project is not acked
+PASS  an unknown session cwd delivers
+PASS  delivery still works when the slot omits useSessions
+PASS  hidden document polls nothing
+PASS  failed pending writes nothing
+PASS  failed pending leaves the file
+PASS  next tick recovers after a pending failure
+PASS  ack failure still writes the draft exactly once
+PASS  ack failure keeps the file for retry
+PASS  next tick retries the ack and deletes the file
+PASS  the retried ack does not re-deliver
+PASS  a throwing insertText is retried
+PASS  a throwing insertText is not acked
+PASS  an undelivered claim stays held (marker kept for the retry)
+PASS  the reference is inserted, never used to replace the draft
+PASS  existing draft text survives and the reference is appended after the selection
+PASS  a separating space is added when the draft already has content
+PASS  an empty draft is filled without a leading space
+PASS  a rejected insertText is retried on the next tick
+PASS  a rejected insertText is not acked
+PASS  exactly one of the two tabs delivers (v1.1 claim single-flight)
+PASS  the winning tab wrote draft + submit once
+PASS  exactly one of the two same-cwd sessions delivers (v1.1 claim single-flight)
+PASS  the pad is inserted before the chip (mention needs a boundary)
+PASS  one chip insertion was requested
+PASS  the chip reference is the clean file mention (clickable, no #L)
+PASS  ref stays resolvable: no #L suffix
+PASS  the line range follows the chip as text
+PASS  the chip is inserted at the collapsed caret, never over a selection
+PASS  the file itself is delivered as a chip, not as flat text
+PASS  chip delivery is acknowledged
+PASS  a refused chip channel still delivers flat text
+PASS  a refused chip channel is still acknowledged
+PASS  a exploded chip channel still delivers flat text
+PASS  a exploded chip channel is still acknowledged
+PASS  exactly one insertion even though submit throws
+PASS  the message is still acknowledged (content is in the composer)
+PASS  unmount clears every poll timer (host sweeper heartbeat exempt)
+
+# fetch log (tail): GET /idea-bridge/pending, GET /idea-bridge/pending, POST /idea-bridge/claim, POST /idea-bridge/ack, GET /idea-bridge/pending, GET /idea-bridge/pending
+# inbox left: (empty)
+
+# summary: 56 passed, 0 failed, 0 product defect(s)

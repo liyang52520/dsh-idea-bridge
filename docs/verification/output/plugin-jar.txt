@@ -1,0 +1,42 @@
+Archive:  dsh-idea-plugin/lib/dsh-idea-plugin-1.1.1.jar
+  Length      Date    Time    Name
+---------  ---------- -----   ----
+        0  02-01-1980 00:00   META-INF/
+      381  02-01-1980 00:00   META-INF/MANIFEST.MF
+       24  02-01-1980 00:00   META-INF/com.yg.dsh_dsh-idea-plugin.kotlin_module
+     6632  02-01-1980 00:00   META-INF/plugin.xml
+     5076  02-01-1980 00:00   META-INF/pluginIcon.svg
+        0  02-01-1980 00:00   com/
+        0  02-01-1980 00:00   com/yg/
+        0  02-01-1980 00:00   com/yg/dsh/
+        0  02-01-1980 00:00   com/yg/dsh/idea/
+        0  02-01-1980 00:00   com/yg/dsh/idea/bridge/
+     1507  02-01-1980 00:00   com/yg/dsh/idea/bridge/BridgeSettings$Companion.class
+     3197  02-01-1980 00:00   com/yg/dsh/idea/bridge/BridgeSettings.class
+     2005  02-01-1980 00:00   com/yg/dsh/idea/bridge/IdeaBridge$Outcome.class
+     4980  02-01-1980 00:00   com/yg/dsh/idea/bridge/IdeaBridge$Result.class
+     4685  02-01-1980 00:00   com/yg/dsh/idea/bridge/IdeaBridge$Selection.class
+    17550  02-01-1980 00:00   com/yg/dsh/idea/bridge/IdeaBridge.class
+     2554  02-01-1980 00:00   com/yg/dsh/idea/bridge/SelectionPayload.class
+     1813  02-01-1980 00:00   com/yg/dsh/idea/bridge/SelectionText.class
+        0  02-01-1980 00:00   com/yg/dsh/idea/i18n/
+     1552  02-01-1980 00:00   com/yg/dsh/idea/i18n/I18nBundle.class
+        0  02-01-1980 00:00   com/yg/dsh/idea/settings/
+     5841  02-01-1980 00:00   com/yg/dsh/idea/settings/DshBridgeConfigurable.class
+        0  02-01-1980 00:00   com/yg/dsh/idea/ui/
+        0  02-01-1980 00:00   com/yg/dsh/idea/ui/actions/
+     1007  02-01-1980 00:00   com/yg/dsh/idea/ui/actions/SendSelectionAction$Companion.class
+     4354  02-01-1980 00:00   com/yg/dsh/idea/ui/actions/SendSelectionAction$SelectionData.class
+    12330  02-01-1980 00:00   com/yg/dsh/idea/ui/actions/SendSelectionAction.class
+        0  02-01-1980 00:00   com/yg/dsh/idea/util/
+     6548  02-01-1980 00:00   com/yg/dsh/idea/util/JsonCodec$Parser.class
+     4634  02-01-1980 00:00   com/yg/dsh/idea/util/JsonCodec.class
+     2465  02-01-1980 00:00   com/yg/dsh/idea/util/LanguageDetector.class
+     3257  02-01-1980 00:00   com/yg/dsh/idea/util/Notifications.class
+        0  02-01-1980 00:00   icons/
+      374  02-01-1980 00:00   icons/deepseek-16.png
+        0  02-01-1980 00:00   messages/
+     1542  02-01-1980 00:00   messages/DshBundle.properties
+     2253  02-01-1980 00:00   messages/DshBundle_zh_CN.properties
+---------                     -------
+    96561                     37 files

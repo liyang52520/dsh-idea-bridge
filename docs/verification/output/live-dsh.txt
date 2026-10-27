@@ -1,0 +1,14 @@
+/idea-bridge/pending         000(unreachable)
+/idea-bridge/claim           000(unreachable)
+/idea-bridge/ack             000(unreachable)
+/idea-bridge/nope            000(unreachable)
+
+{
+  "version": 1,
+  "inboxDir": "/Users/liyang/.dsh/idea-bridge/inbox",
+  "endpoint": "/idea-bridge/pending",
+  "claimEndpoint": "/idea-bridge/claim",
+  "ackEndpoint": "/idea-bridge/ack",
+  "pid": 28289,
+  "updatedAt": 1793069096472
+}

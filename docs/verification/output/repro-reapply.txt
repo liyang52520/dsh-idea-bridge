@@ -1,0 +1,81 @@
+PASS  sequential re-apply in one process does not throw
+# sequential re-apply elapsed 1 ms
+PASS  disposing the OLD activation keeps the NEW handshake
+PASS  disposing the owner removes the handshake
+PASS  round 0: six concurrent apply() calls all succeed
+PASS  round 0: handshake is valid JSON
+PASS  round 0: handshake inboxDir
+PASS  round 0: no *.tmp residue
+WARN ENOENT: no such file or directory, open '/var/folders/g3/mnyb6bnn0cz4z5p006dcnmjr0000gn/T/idea-bridge-repro-VPu9qh/idea-bridge/location.json'
+WARN ENOENT: no such file or directory, open '/var/folders/g3/mnyb6bnn0cz4z5p006dcnmjr0000gn/T/idea-bridge-repro-VPu9qh/idea-bridge/location.json'
+WARN ENOENT: no such file or directory, open '/var/folders/g3/mnyb6bnn0cz4z5p006dcnmjr0000gn/T/idea-bridge-repro-VPu9qh/idea-bridge/location.json'
+WARN ENOENT: no such file or directory, open '/var/folders/g3/mnyb6bnn0cz4z5p006dcnmjr0000gn/T/idea-bridge-repro-VPu9qh/idea-bridge/location.json'
+WARN ENOENT: no such file or directory, open '/var/folders/g3/mnyb6bnn0cz4z5p006dcnmjr0000gn/T/idea-bridge-repro-VPu9qh/idea-bridge/location.json'
+PASS  round 1: six concurrent apply() calls all succeed
+PASS  round 1: handshake is valid JSON
+PASS  round 1: handshake inboxDir
+PASS  round 1: no *.tmp residue
+WARN ENOENT: no such file or directory, open '/var/folders/g3/mnyb6bnn0cz4z5p006dcnmjr0000gn/T/idea-bridge-repro-VPu9qh/idea-bridge/location.json'
+WARN ENOENT: no such file or directory, open '/var/folders/g3/mnyb6bnn0cz4z5p006dcnmjr0000gn/T/idea-bridge-repro-VPu9qh/idea-bridge/location.json'
+WARN ENOENT: no such file or directory, open '/var/folders/g3/mnyb6bnn0cz4z5p006dcnmjr0000gn/T/idea-bridge-repro-VPu9qh/idea-bridge/location.json'
+WARN ENOENT: no such file or directory, open '/var/folders/g3/mnyb6bnn0cz4z5p006dcnmjr0000gn/T/idea-bridge-repro-VPu9qh/idea-bridge/location.json'
+WARN ENOENT: no such file or directory, open '/var/folders/g3/mnyb6bnn0cz4z5p006dcnmjr0000gn/T/idea-bridge-repro-VPu9qh/idea-bridge/location.json'
+PASS  round 2: six concurrent apply() calls all succeed
+PASS  round 2: handshake is valid JSON
+PASS  round 2: handshake inboxDir
+PASS  round 2: no *.tmp residue
+WARN ENOENT: no such file or directory, open '/var/folders/g3/mnyb6bnn0cz4z5p006dcnmjr0000gn/T/idea-bridge-repro-VPu9qh/idea-bridge/location.json'
+WARN ENOENT: no such file or directory, open '/var/folders/g3/mnyb6bnn0cz4z5p006dcnmjr0000gn/T/idea-bridge-repro-VPu9qh/idea-bridge/location.json'
+WARN ENOENT: no such file or directory, open '/var/folders/g3/mnyb6bnn0cz4z5p006dcnmjr0000gn/T/idea-bridge-repro-VPu9qh/idea-bridge/location.json'
+WARN ENOENT: no such file or directory, open '/var/folders/g3/mnyb6bnn0cz4z5p006dcnmjr0000gn/T/idea-bridge-repro-VPu9qh/idea-bridge/location.json'
+WARN ENOENT: no such file or directory, open '/var/folders/g3/mnyb6bnn0cz4z5p006dcnmjr0000gn/T/idea-bridge-repro-VPu9qh/idea-bridge/location.json'
+PASS  round 3: six concurrent apply() calls all succeed
+PASS  round 3: handshake is valid JSON
+PASS  round 3: handshake inboxDir
+PASS  round 3: no *.tmp residue
+WARN ENOENT: no such file or directory, open '/var/folders/g3/mnyb6bnn0cz4z5p006dcnmjr0000gn/T/idea-bridge-repro-VPu9qh/idea-bridge/location.json'
+WARN ENOENT: no such file or directory, open '/var/folders/g3/mnyb6bnn0cz4z5p006dcnmjr0000gn/T/idea-bridge-repro-VPu9qh/idea-bridge/location.json'
+WARN ENOENT: no such file or directory, open '/var/folders/g3/mnyb6bnn0cz4z5p006dcnmjr0000gn/T/idea-bridge-repro-VPu9qh/idea-bridge/location.json'
+WARN ENOENT: no such file or directory, open '/var/folders/g3/mnyb6bnn0cz4z5p006dcnmjr0000gn/T/idea-bridge-repro-VPu9qh/idea-bridge/location.json'
+WARN ENOENT: no such file or directory, open '/var/folders/g3/mnyb6bnn0cz4z5p006dcnmjr0000gn/T/idea-bridge-repro-VPu9qh/idea-bridge/location.json'
+PASS  round 4: six concurrent apply() calls all succeed
+PASS  round 4: handshake is valid JSON
+PASS  round 4: handshake inboxDir
+PASS  round 4: no *.tmp residue
+WARN ENOENT: no such file or directory, open '/var/folders/g3/mnyb6bnn0cz4z5p006dcnmjr0000gn/T/idea-bridge-repro-VPu9qh/idea-bridge/location.json'
+WARN ENOENT: no such file or directory, open '/var/folders/g3/mnyb6bnn0cz4z5p006dcnmjr0000gn/T/idea-bridge-repro-VPu9qh/idea-bridge/location.json'
+WARN ENOENT: no such file or directory, open '/var/folders/g3/mnyb6bnn0cz4z5p006dcnmjr0000gn/T/idea-bridge-repro-VPu9qh/idea-bridge/location.json'
+WARN ENOENT: no such file or directory, open '/var/folders/g3/mnyb6bnn0cz4z5p006dcnmjr0000gn/T/idea-bridge-repro-VPu9qh/idea-bridge/location.json'
+WARN ENOENT: no such file or directory, open '/var/folders/g3/mnyb6bnn0cz4z5p006dcnmjr0000gn/T/idea-bridge-repro-VPu9qh/idea-bridge/location.json'
+PASS  round 5: six concurrent apply() calls all succeed
+PASS  round 5: handshake is valid JSON
+PASS  round 5: handshake inboxDir
+PASS  round 5: no *.tmp residue
+WARN ENOENT: no such file or directory, open '/var/folders/g3/mnyb6bnn0cz4z5p006dcnmjr0000gn/T/idea-bridge-repro-VPu9qh/idea-bridge/location.json'
+WARN ENOENT: no such file or directory, open '/var/folders/g3/mnyb6bnn0cz4z5p006dcnmjr0000gn/T/idea-bridge-repro-VPu9qh/idea-bridge/location.json'
+WARN ENOENT: no such file or directory, open '/var/folders/g3/mnyb6bnn0cz4z5p006dcnmjr0000gn/T/idea-bridge-repro-VPu9qh/idea-bridge/location.json'
+WARN ENOENT: no such file or directory, open '/var/folders/g3/mnyb6bnn0cz4z5p006dcnmjr0000gn/T/idea-bridge-repro-VPu9qh/idea-bridge/location.json'
+WARN ENOENT: no such file or directory, open '/var/folders/g3/mnyb6bnn0cz4z5p006dcnmjr0000gn/T/idea-bridge-repro-VPu9qh/idea-bridge/location.json'
+PASS  round 6: six concurrent apply() calls all succeed
+PASS  round 6: handshake is valid JSON
+PASS  round 6: handshake inboxDir
+PASS  round 6: no *.tmp residue
+WARN ENOENT: no such file or directory, open '/var/folders/g3/mnyb6bnn0cz4z5p006dcnmjr0000gn/T/idea-bridge-repro-VPu9qh/idea-bridge/location.json'
+WARN ENOENT: no such file or directory, open '/var/folders/g3/mnyb6bnn0cz4z5p006dcnmjr0000gn/T/idea-bridge-repro-VPu9qh/idea-bridge/location.json'
+WARN ENOENT: no such file or directory, open '/var/folders/g3/mnyb6bnn0cz4z5p006dcnmjr0000gn/T/idea-bridge-repro-VPu9qh/idea-bridge/location.json'
+WARN ENOENT: no such file or directory, open '/var/folders/g3/mnyb6bnn0cz4z5p006dcnmjr0000gn/T/idea-bridge-repro-VPu9qh/idea-bridge/location.json'
+WARN ENOENT: no such file or directory, open '/var/folders/g3/mnyb6bnn0cz4z5p006dcnmjr0000gn/T/idea-bridge-repro-VPu9qh/idea-bridge/location.json'
+PASS  round 7: six concurrent apply() calls all succeed
+PASS  round 7: handshake is valid JSON
+PASS  round 7: handshake inboxDir
+PASS  round 7: no *.tmp residue
+WARN ENOENT: no such file or directory, open '/var/folders/g3/mnyb6bnn0cz4z5p006dcnmjr0000gn/T/idea-bridge-repro-VPu9qh/idea-bridge/location.json'
+WARN ENOENT: no such file or directory, open '/var/folders/g3/mnyb6bnn0cz4z5p006dcnmjr0000gn/T/idea-bridge-repro-VPu9qh/idea-bridge/location.json'
+WARN ENOENT: no such file or directory, open '/var/folders/g3/mnyb6bnn0cz4z5p006dcnmjr0000gn/T/idea-bridge-repro-VPu9qh/idea-bridge/location.json'
+WARN ENOENT: no such file or directory, open '/var/folders/g3/mnyb6bnn0cz4z5p006dcnmjr0000gn/T/idea-bridge-repro-VPu9qh/idea-bridge/location.json'
+WARN ENOENT: no such file or directory, open '/var/folders/g3/mnyb6bnn0cz4z5p006dcnmjr0000gn/T/idea-bridge-repro-VPu9qh/idea-bridge/location.json'
+# rounds=8 rounds-with-a-failure=0
+PASS  frozen-clock concurrent apply() (old D1 trigger) all succeed
+PASS  frozen-clock handshake exists
+
+# summary: all checks passed

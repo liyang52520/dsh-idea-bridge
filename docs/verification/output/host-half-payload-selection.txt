@@ -1,0 +1,67 @@
+# DSH_HOME=/var/folders/g3/mnyb6bnn0cz4z5p006dcnmjr0000gn/T/idea-bridge-verify-PWDWrk
+# fixture={"version":1,"id":"11111111-2222-3333-4444-555555555555","createdAt":1793069147086,"source":"idea-selection","submit":true,"projectPath":"/Users/liyang/IdeaProjects/foo","file":"/Users/liyang/IdeaProjects/foo/src/Bar.kt","language":"kotlin","lineStart":10,"lineEnd":20,"text":"@/Users/liyang/IdeaProjects/foo/src/Bar.kt#L10-20 "}
+PASS  location.json exists
+PASS  location keys
+PASS  location.version
+PASS  location.inboxDir === <DSH_HOME>/idea-bridge/inbox
+PASS  location.inboxDir is absolute
+PASS  location.endpoint
+PASS  location.claimEndpoint
+PASS  location.ackEndpoint
+PASS  location.pid
+PASS  location.updatedAt is a number
+PASS  location.json mode is 0600
+PASS  bridge dir mode is 0700
+PASS  inbox dir mode is 0700
+PASS  three routes registered (v1.1: pending + claim + ack)
+PASS  sweeper timer created
+PASS  pending status
+PASS  pending item count
+PASS  pending returns the file content verbatim (key order + values)
+PASS  pending preserves every contract key
+PASS  createdAt survives as a JSON number
+PASS  lineStart survives as a JSON number
+PASS  pending does not consume the file
+PASS  stale (>10min createdAt) dropped
+PASS  malformed / wrong-shape / non-.json ignored
+PASS  fresh items present
+PASS  ordered by createdAt ascending
+PASS  .tmp residue is not treated as a message
+PASS  pending caps at 20 items
+PASS  ack status
+PASS  ack body
+PASS  acked files deleted
+PASS  repeat ack is idempotent (removed=0, still 200)
+PASS  path-traversal ids are refused, not deleted
+PASS  claim status/body
+PASS  claim marker created
+PASS  second claim of the same id is not granted
+PASS  claim for a vanished .json is refused
+PASS  refused claim leaves no marker behind
+PASS  a claimed-but-unacked message is still listed (not consumed by claim)
+PASS  ack removes message + claim together
+PASS  claim GET -> 405 + Allow
+PASS  claim bad JSON -> 400
+PASS  claim path-traversal id refused
+PASS  pending POST -> 405 + Allow
+PASS  ack GET -> 405 + Allow
+PASS  ack bad JSON -> 400
+PASS  ack non-string ids -> 400
+PASS  ack empty ids -> 200 removed 0
+PASS  ack oversized body -> 413
+PASS  rejected pending -> 401 with empty body
+PASS  rejected ack -> 401 and file kept
+PASS  rejection status is passed through verbatim (403)
+PASS  sweeper removes files whose mtime is >10min old
+PASS  sweeper keeps old-createdAt/fresh-mtime files (mtime criterion)
+PASS  sweeper does not consume live files
+PASS  sweeper refreshes updatedAt heartbeat
+PASS  four effects registered (v1.1: handshake + three routes)
+PASS  routes disposed
+PASS  disposer removes own location.json
+PASS  re-applying the bundle (plugin reload) does not throw
+PASS  a newer instance handshake is not removed by an older process
+
+# logger warnings: 0
+
+# summary: 61 passed, 0 failed

@@ -1,0 +1,3 @@
+- insert:
+    - id: idea-bridge
+      name: '@local/dsh-idea-bridge'
