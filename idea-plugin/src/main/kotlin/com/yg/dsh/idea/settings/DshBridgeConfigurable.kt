@@ -13,7 +13,7 @@ import javax.swing.JPanel
 import javax.swing.JTextField
 
 /**
- * Settings → Tools → DeepSeek Harness。
+ * Settings → Tools → DeepSeek Harness Bridge。
  *
  * 只有三个开关/字段：是否自动提交、是否写完聚焦 DSH 窗口、收件箱目录覆盖。
  * 默认值即可用，所以这个页面主要是给排障和高级用法留的口子。

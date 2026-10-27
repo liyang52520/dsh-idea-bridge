@@ -55,8 +55,15 @@ tail -1 "$OUT/repro-claim-missing.txt"
 
 echo "### 6c. live routes of the user's running DSH (read-only, no cookie)"
 {
+  # 端口不写死：优先 DSH_PORT=<port> 覆盖，否则从握手文件的 pid 反查它监听的 TCP 端口
+  DSH_PID="$(python3 -c "import json,os;print(json.load(open(os.path.expanduser('~/.dsh/idea-bridge/location.json')))['pid'])" 2>/dev/null || true)"
+  if [ -z "${DSH_PORT:-}" ] && [ -n "${DSH_PID:-}" ]; then
+    DSH_PORT="$(lsof -Pan -p "$DSH_PID" -iTCP -sTCP:LISTEN 2>/dev/null | awk 'NR>1 {n=$9; sub(/.*:/, "", n); print n; exit}')"
+  fi
+  DSH_PORT="${DSH_PORT:-61058}"
+  echo "port=$DSH_PORT pid=${DSH_PID:-unknown}"
   for p in pending claim ack nope; do
-    printf '%-28s %s\n' "/idea-bridge/$p" "$(curl -s -o /dev/null -w '%{http_code}' --max-time 5 "http://127.0.0.1:61058/idea-bridge/$p" 2>/dev/null || echo '(unreachable)')"
+    printf '%-28s %s\n' "/idea-bridge/$p" "$(curl -s -o /dev/null -w '%{http_code}' --max-time 5 "http://127.0.0.1:$DSH_PORT/idea-bridge/$p" 2>/dev/null || echo '(unreachable)')"
   done
   echo
   cat "$HOME/.dsh/idea-bridge/location.json" 2>/dev/null || echo "(no handshake)"

@@ -1,6 +1,6 @@
 <idea-plugin>
     <id>com.yg.dsh.idea</id>
-    <name>DeepSeek Harness</name>
+    <name>DeepSeek Harness Bridge</name>
     <vendor url="https://github.com/liyang52520/dsh-idea-bridge">YG</vendor>
 
     <description><![CDATA[
@@ -27,7 +27,7 @@
         <ul>
             <li>Pre-fills the DeepSeek Harness input box and leaves it there — you add your question and
             press Enter. Turn on <b>Submit the message automatically</b> in
-            <b>Settings → Tools → DeepSeek Harness</b> if you want it sent immediately.</li>
+            <b>Settings → Tools → DeepSeek Harness Bridge</b> if you want it sent immediately.</li>
             <li>If anything goes wrong, the reference is copied to the clipboard so nothing is lost.</li>
             <li>Bilingual UI (English / 简体中文).</li>
         </ul>
@@ -53,7 +53,7 @@
         <h4>行为说明</h4>
         <ul>
             <li>默认只把引用填进 DeepSeek Harness 输入框，你自己补一句话再回车；需要立即发送就在
-            <b>设置 → Tools → DeepSeek Harness</b> 勾上"自动提交"。</li>
+            <b>设置 → Tools → DeepSeek Harness Bridge</b> 勾上"自动提交"。</li>
             <li>任何环节失败都会把引用复制到剪贴板，保证内容不丢。</li>
             <li>中英双语界面。</li>
         </ul>
@@ -61,6 +61,22 @@
 
     <change-notes><![CDATA[
         <h3>English / 中文</h3>
+        <h4>v2.0.0</h4>
+        <ul>
+            <li>Pivot to a single feature: send the editor selection to the DeepSeek Harness instance
+            you already have open. The embedded web UI, the DSH process lifecycle, the IDE MCP
+            endpoint, review/snapshot tooling, provider settings and credential sync are all removed
+            (~7000 lines → ~600).
+            战略收敛为单一功能：把选中代码发送到你已经打开的 DeepSeek Harness。内嵌 Web UI、
+            DSH 进程管理、IDE MCP 端点、评审/快照、服务商配置与凭据同步全部删除（约 7000 行 → 约 600 行）。</li>
+            <li>Plugin renamed to <b>DeepSeek Harness Bridge</b>; the repository is now
+            <code>dsh-idea-bridge</code> with the IntelliJ plugin in <code>idea-plugin/</code> and the
+            companion DSH plugin in <code>dsh-plugin/</code>. The plugin ID, the inbox directory and the
+            <code>/idea-bridge/*</code> routes are unchanged.
+            插件更名为 <b>DeepSeek Harness Bridge</b>；仓库更名为 <code>dsh-idea-bridge</code>，
+            IDEA 插件在 <code>idea-plugin/</code>，DSH 侧插件在 <code>dsh-plugin/</code>；
+            插件 ID、收件箱目录与 <code>/idea-bridge/*</code> 路由均不变。</li>
+        </ul>
         <h4>v1.1.0</h4>
         <ul>
             <li>Draft by default: the reference is placed in the DeepSeek Harness input box and left
@@ -70,15 +86,6 @@
             directory equals the project root, and when there is none the plugin now says so
             (with a clipboard fallback) instead of pretending it was sent.
             严格项目路由：只投给工作目录等于项目根的会话；没有这样的会话时会明确提示（并回退剪贴板），不再"假成功"。</li>
-        </ul>
-        <h4>v2.0.0</h4>
-        <ul>
-            <li>Pivot to a single feature: send the editor selection to the DeepSeek Harness instance
-            you already have open. The embedded web UI, the DSH process lifecycle, the IDE MCP
-            endpoint, review/snapshot tooling, provider settings and credential sync are all removed
-            (~7000 lines → ~600).
-            战略收敛为单一功能：把选中代码发送到你已经打开的 DeepSeek Harness。内嵌 Web UI、
-            DSH 进程管理、IDE MCP 端点、评审/快照、服务商配置与凭据同步全部删除（约 7000 行 → 约 600 行）。</li>
         </ul>
         <h4>v1.0.0</h4>
         <ul>
@@ -107,11 +114,11 @@
     <extensions defaultExtensionNs="com.intellij">
         <applicationService serviceImplementation="com.yg.dsh.idea.bridge.BridgeSettings"/>
 
-        <!-- Settings → Tools → DeepSeek Harness：自动提交 / 聚焦窗口 / 收件箱目录 -->
+        <!-- Settings → Tools → DeepSeek Harness Bridge：自动提交 / 聚焦窗口 / 收件箱目录 -->
         <applicationConfigurable
                 parentId="tools"
                 id="com.yg.dsh.idea.settings.DshBridgeConfigurable"
-                displayName="DeepSeek Harness"
+                displayName="DeepSeek Harness Bridge"
                 instance="com.yg.dsh.idea.settings.DshBridgeConfigurable"/>
 
     </extensions>

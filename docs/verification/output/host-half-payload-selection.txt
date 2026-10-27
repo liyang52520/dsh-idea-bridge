@@ -1,5 +1,5 @@
-# DSH_HOME=/var/folders/g3/mnyb6bnn0cz4z5p006dcnmjr0000gn/T/idea-bridge-verify-PWDWrk
-# fixture={"version":1,"id":"11111111-2222-3333-4444-555555555555","createdAt":1793069147086,"source":"idea-selection","submit":true,"projectPath":"/Users/liyang/IdeaProjects/foo","file":"/Users/liyang/IdeaProjects/foo/src/Bar.kt","language":"kotlin","lineStart":10,"lineEnd":20,"text":"@/Users/liyang/IdeaProjects/foo/src/Bar.kt#L10-20 "}
+# DSH_HOME=/var/folders/g3/mnyb6bnn0cz4z5p006dcnmjr0000gn/T/idea-bridge-verify-iZTlKW
+# fixture={"version":1,"id":"11111111-2222-3333-4444-555555555555","createdAt":1793071411790,"source":"idea-selection","submit":true,"projectPath":"/Users/liyang/IdeaProjects/foo","file":"/Users/liyang/IdeaProjects/foo/src/Bar.kt","language":"kotlin","lineStart":10,"lineEnd":20,"text":"@/Users/liyang/IdeaProjects/foo/src/Bar.kt#L10-20 "}
 PASS  location.json exists
 PASS  location keys
 PASS  location.version

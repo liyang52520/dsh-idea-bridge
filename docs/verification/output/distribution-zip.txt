@@ -1,10 +1,10 @@
-Archive:  /Users/liyang/IdeaProjects/dsh-idea-bridge/idea-plugin/build/distributions/dsh-idea-plugin-1.1.1.zip
+Archive:  /Users/liyang/IdeaProjects/dsh-idea-bridge/idea-plugin/build/distributions/dsh-idea-plugin-2.0.0.zip
   Length      Date    Time    Name
 ---------  ---------- -----   ----
         0  02-01-1980 00:00   dsh-idea-plugin/
         0  02-01-1980 00:00   dsh-idea-plugin/lib/
     17536  02-01-1980 00:00   dsh-idea-plugin/lib/annotations-13.0.jar
-    50395  02-01-1980 00:00   dsh-idea-plugin/lib/dsh-idea-plugin-1.1.1.jar
+    50589  02-01-1980 00:00   dsh-idea-plugin/lib/dsh-idea-plugin-2.0.0.jar
   1841933  02-01-1980 00:00   dsh-idea-plugin/lib/kotlin-stdlib-2.4.10.jar
 ---------                     -------
-  1909864                     5 files
+  1910058                     5 files

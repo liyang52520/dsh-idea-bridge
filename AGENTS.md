@@ -1,4 +1,4 @@
-# AGENTS.md — DeepSeek Harness ↔ IntelliJ IDEA 桥接插件
+# AGENTS.md — DeepSeek Harness Bridge（IDEA ↔ DSH 桥接插件）
 
 ## Project Overview
 
@@ -33,7 +33,7 @@ cd idea-plugin
   -PlocalIdePath="/Applications/IntelliJ IDEA.app/Contents"
 ```
 
-产物：`idea-plugin/build/distributions/dsh-idea-plugin-<version>.zip`（当前 1.1.1）
+产物：`idea-plugin/build/distributions/dsh-idea-plugin-<version>.zip`（当前 2.0.0）
 
 沙箱提示：Gradle 必须写 `~/.gradle`（wrapper 锁、依赖缓存、toolchain）。若会话是
 workspace-write 沙箱，这条命令会被拒；需要 danger-full-access。
@@ -74,7 +74,7 @@ idea-plugin/src/main/kotlin/com/yg/dsh/idea/
 │   ├── SelectionPayload.kt  # 消息文件的 JSON 形状（契约 §3），独立可测
 │   └── SelectionText.kt     # 固定引用格式 @path#L10-20 + 尾随空格
 ├── i18n/I18nBundle.kt       # DynamicBundle 包装
-├── settings/DshBridgeConfigurable.kt  # Settings → Tools → DeepSeek Harness（3 个开关/字段）
+├── settings/DshBridgeConfigurable.kt  # Settings → Tools → DeepSeek Harness Bridge（3 个开关/字段）
 ├── ui/actions/SendSelectionAction.kt  # 唯一入口：Ctrl+Alt+K / 右键；失败回退剪贴板
 └── util/
     ├── JsonCodec.kt         # 极简 JSON（无 Gson 依赖），写消息 + 读握手文件
@@ -160,7 +160,7 @@ IDEA: 盯自己的消息文件 ≤3.5s 判定结果 —— .claim 出现=已领�
    - 文件在但 DSH 页面没反应，且**有 `.claim`** → 客户端半领了但投递失败，看 DSH 控制台。
 3. **路由是否活着**：`curl -i http://127.0.0.1:<port>/idea-bridge/pending` 返回 401 是正常的
    （闸门要求页面的同源 cookie）；返回 404 说明 host 半没注册。
-4. **IDEA 侧**：`Settings → Tools → DeepSeek Harness` 里会显示解析到的收件箱目录与
+4. **IDEA 侧**：`Settings → Tools → DeepSeek Harness Bridge` 里会显示解析到的收件箱目录与
    "DSH bridge detected/not detected"。
 5. **DSH_HOME 不一致**：DSH 侧与 IDEA 侧各自解析 `$DSH_HOME`（默认 `~/.dsh`）。
    不等时以 `location.json` 为准；也可以在设置里直接覆盖收件箱目录。

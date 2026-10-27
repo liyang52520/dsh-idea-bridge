@@ -1,4 +1,4 @@
-# DeepSeek Harness for IntelliJ IDEA
+# DeepSeek Harness Bridge for IntelliJ IDEA
 
 > 仓库 `dsh-idea-bridge` 同时容纳桥的两半：`idea-plugin/`（IntelliJ 插件）与
 > `dsh-plugin/`（DSH 侧插件，npm 包名 `@local/dsh-idea-bridge`）。
@@ -47,7 +47,7 @@ DSH 内部 API、不启动任何进程。DSH 侧插件用 DSH 自己的公开扩
 
 ## 设置 / Settings
 
-Settings → Tools → DeepSeek Harness：自动提交（默认**关**——只填草稿，你自己补一句话再回车）、
+Settings → Tools → DeepSeek Harness Bridge：自动提交（默认**关**——只填草稿，你自己补一句话再回车）、
 发送后聚焦 DSH 窗口（默认开）、收件箱目录覆盖（默认从 `~/.dsh/idea-bridge/location.json` 自动解析）。
 
 任何环节失败都会把引用复制到剪贴板，保证内容不丢。

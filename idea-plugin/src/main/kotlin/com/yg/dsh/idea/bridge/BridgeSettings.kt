@@ -7,7 +7,7 @@ import com.intellij.openapi.components.Storage
 import com.intellij.util.xmlb.XmlSerializerUtil
 
 /**
- * 桥接设置（Settings → Tools → DeepSeek Harness）。
+ * 桥接设置（Settings → Tools → DeepSeek Harness Bridge）。
  *
  * 全部字段都有可用默认值：默认设置下插件开箱即用（收件箱按
  * `$DSH_HOME/idea-bridge` 的握手文件解析，自动提交，写完把 DSH 窗口带到前台）。

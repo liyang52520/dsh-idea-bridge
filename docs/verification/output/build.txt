@@ -12,9 +12,9 @@ Daemon will be stopped at the end of the build
 > Task :classes
 > Task :jar
 > Task :composedJar
-> Task :prepareTestSandbox UP-TO-DATE
+> Task :prepareTestSandbox
 > Task :prepareTest
-> Task :prepareSandbox UP-TO-DATE
+> Task :prepareSandbox
 > Task :buildSearchableOptions SKIPPED
 > Task :prepareJarSearchableOptions SKIPPED
 > Task :jarSearchableOptions SKIPPED
@@ -25,7 +25,7 @@ Daemon will be stopped at the end of the build
 > Task :instrumentTestCode SKIPPED
 > Task :test
 
-BUILD SUCCESSFUL in 12s
-14 actionable tasks: 12 executed, 2 up-to-date
+BUILD SUCCESSFUL in 16s
+14 actionable tasks: 14 executed
 Consider enabling configuration cache to speed up this build: https://docs.gradle.org/9.5.1/userguide/configuration_cache_enabling.html
 exit=0

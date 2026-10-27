@@ -14,7 +14,7 @@ plugins {
 }
 
 group = "com.yg.dsh"
-version = "1.1.1"
+version = "2.0.0"
 
 repositories {
     mavenCentral()

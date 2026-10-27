@@ -1,7 +1,8 @@
-/idea-bridge/pending         000(unreachable)
-/idea-bridge/claim           000(unreachable)
-/idea-bridge/ack             000(unreachable)
-/idea-bridge/nope            000(unreachable)
+port=50210 pid=28289
+/idea-bridge/pending         401
+/idea-bridge/claim           401
+/idea-bridge/ack             401
+/idea-bridge/nope            404
 
 {
   "version": 1,
@@ -10,5 +11,5 @@
   "claimEndpoint": "/idea-bridge/claim",
   "ackEndpoint": "/idea-bridge/ack",
   "pid": 28289,
-  "updatedAt": 1793069096472
+  "updatedAt": 1793071376532
 }

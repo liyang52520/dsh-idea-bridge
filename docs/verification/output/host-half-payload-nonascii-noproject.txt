@@ -1,5 +1,5 @@
-# DSH_HOME=/var/folders/g3/mnyb6bnn0cz4z5p006dcnmjr0000gn/T/idea-bridge-verify-2TE7xk
-# fixture={"version":1,"id":"33333333-2222-3333-4444-555555555555","createdAt":1793069147086,"source":"idea-selection","submit":false,"projectPath":null,"file":"/Users/liyang/项目/文件.kt","language":null,"lineStart":7,"lineEnd":7,"text":"@/Users/liyang/项目/文件.kt#L7 "}
+# DSH_HOME=/var/folders/g3/mnyb6bnn0cz4z5p006dcnmjr0000gn/T/idea-bridge-verify-kc87e7
+# fixture={"version":1,"id":"33333333-2222-3333-4444-555555555555","createdAt":1793071411790,"source":"idea-selection","submit":false,"projectPath":null,"file":"/Users/liyang/项目/文件.kt","language":null,"lineStart":7,"lineEnd":7,"text":"@/Users/liyang/项目/文件.kt#L7 "}
 PASS  location.json exists
 PASS  location keys
 PASS  location.version

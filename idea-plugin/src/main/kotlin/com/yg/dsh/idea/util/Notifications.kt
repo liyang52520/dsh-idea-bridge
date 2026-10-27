@@ -24,7 +24,7 @@ object Notifications {
         type: NotificationType = NotificationType.INFORMATION,
     ) {
         Notifications.Bus.notify(
-            Notification("DeepSeek Harness", "", content, type),
+            Notification("DeepSeek Harness Bridge", "", content, type),
             project,
         )
     }
