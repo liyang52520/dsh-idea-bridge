@@ -5,7 +5,6 @@ import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
-import com.intellij.openapi.actionSystem.LangDataKeys
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.diagnostic.Logger
@@ -36,10 +35,16 @@ class SendSelectionAction : AnAction(I18nBundle.message("action.sendSelection"))
     override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
 
     override fun update(e: AnActionEvent) {
-        // 项目树右键/焦点在项目树时，数据上下文里有 IDE_VIEW；此时即使编辑器还开着，
-        // 也要发“选中的文件/文件夹”而不是编辑器选区（否则右键文件会把编辑器里的选区发出去）。
-        val projectViewMode = e.getData(LangDataKeys.IDE_VIEW) != null
-        val editor = if (projectViewMode) null else e.getData(CommonDataKeys.EDITOR)
+        // 模式判定只看“有没有编辑器数据”，**不要**看 LangDataKeys.IDE_VIEW。
+        //
+        // 平台会通过全局 `<uiDataRule>`（TextEditorPsiDataRule）给**编辑器上下文**也合成一个
+        // IdeView，因此 `e.getData(LangDataKeys.IDE_VIEW) != null` 在编辑器里同样成立。
+        // 2.1.2 用它判断“项目树模式”，结果每次在编辑器里按 Ctrl+Alt+K 都走了项目树分支：
+        // editor 被强制置 null、行号永远是 0，只发出整文件引用（用户实测的 bug）。
+        //
+        // 项目树右键菜单 / 焦点在项目树时，数据上下文里没有 EDITOR；所以 editor == null
+        // 才是可靠的“项目树模式”判据。
+        val editor = e.getData(CommonDataKeys.EDITOR)
         if (editor != null) {
             e.presentation.text = I18nBundle.message("action.sendSelection")
             e.presentation.isEnabledAndVisible = editor.selectionModel.hasSelection() ||
@@ -54,8 +59,8 @@ class SendSelectionAction : AnAction(I18nBundle.message("action.sendSelection"))
 
     override fun actionPerformed(e: AnActionEvent) {
         val project = e.project ?: return
-        val projectViewMode = e.getData(LangDataKeys.IDE_VIEW) != null
-        val editor = if (projectViewMode) null else e.getData(CommonDataKeys.EDITOR)
+        // 见 update()：不能用 LangDataKeys.IDE_VIEW 判断项目树模式（编辑器上下文里它也为非空）。
+        val editor = e.getData(CommonDataKeys.EDITOR)
         // DataContext 只在 EDT 上可靠：这里同步抓出 VirtualFile 列表，后台线程只使用已拿到的对象。
         val files = if (editor == null) selectedSendableFiles(e) else emptyList()
         if (editor == null && files.isEmpty()) return
@@ -82,6 +87,13 @@ class SendSelectionAction : AnAction(I18nBundle.message("action.sendSelection"))
                 }
 
                 texts = selections.map { SelectionText.format(it.filePath, it.lineStart, it.lineEnd) }
+                // 直接把真正投递出去的引用格式（含行号）写进 idea.log：排查“只发文件、不带行号”
+                // 时不用再抓收件箱或装调试包（信息级，随 Help → Show Log 即可看到）。
+                LOG.info(
+                    "sending ${texts.size} reference(s) via " +
+                        (if (editor != null) "editor selection" else "project view") +
+                        ": " + texts.joinToString(" | "),
+                )
                 val settings = BridgeSettings.getInstance()
                 val results = selections.zip(texts).map { (data, text) ->
                     data to IdeaBridge.send(

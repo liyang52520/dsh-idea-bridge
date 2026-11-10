@@ -34,7 +34,7 @@ cd idea-plugin
   -PlocalIdePath="/Applications/IntelliJ IDEA.app/Contents"
 ```
 
-产物：`idea-plugin/build/distributions/dsh-idea-plugin-<version>.zip`（当前 2.1.2）
+产物：`idea-plugin/build/distributions/dsh-idea-plugin-<version>.zip`（当前 2.1.3）
 
 沙箱提示：Gradle 必须写 `~/.gradle`（wrapper 锁、依赖缓存、toolchain）。若会话是
 workspace-write 沙箱，这条命令会被拒；需要 danger-full-access。
@@ -170,6 +170,19 @@ IDEA: 盯自己的消息文件 ≤3.5s 判定结果 —— .claim 出现=已领�
    不等时以 `location.json` 为准；也可以在设置里直接覆盖收件箱目录。
 6. **投递结果判定**：IDEA 侧写完后会盯自己的文件 ≤3.5s（`.claim` 出现=已领取、`.json` 消失
    =已投递、超时=无匹配会话）。看到"没有工作目录为项目 X 的会话"就是第 2 条的情形。
+
+### 选中了代码，但发出去只有文件、没有行号
+
+**先看 `idea.log`**（Help → Show Log in Finder）里 `#com.yg.dsh.idea.bridge`/`SendSelectionAction` 的
+`INFO ... sending N reference(s) via editor selection|project view: <text>` 行：`text` 就是真正写进
+收件箱的引用，带不带 `#L` 一眼可见。若显示 `via project view`，说明动作被判成了项目树模式。
+
+**不要用 `LangDataKeys.IDE_VIEW` 判断“项目树上下文”**：平台通过全局 `<uiDataRule>`
+（`TextEditorPsiDataRule`，`intellij.platform.lang.impl.jar`）给**编辑器上下文也合成一个
+IdeView**，所以编辑器里 `e.getData(LangDataKeys.IDE_VIEW) != null` 同样成立。2.1.2 用这个判据
+导致每次 Ctrl+Alt+K 都走项目树分支（`lineStart=0`、只发 `@/path `）——2.1.3 已改为
+`CommonDataKeys.EDITOR == null` 才是项目树模式。要复现/验证：用 5ms 轮询盯
+`~/.dsh/idea-bridge/inbox/*.json`（在 DSH claim 之前把它拷走），直接看 `lineStart`/`lineEnd`/`text`。
 
 ## Known Issues
 
