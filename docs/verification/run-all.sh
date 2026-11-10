@@ -29,10 +29,12 @@ java -cp "/tmp/verify-tools:$CP" IdeaPayloadEmitter "22222222-2222-3333-4444-555
   /Users/liyang/IdeaProjects/foo /Users/liyang/IdeaProjects/foo/src/Bar.kt kotlin 0 0 true > "$OUT/payload-wholefile.json"
 java -cp "/tmp/verify-tools:$CP" IdeaPayloadEmitter "33333333-2222-3333-4444-555555555555" "$NOW" - \
   "/Users/liyang/项目/文件.kt" - 7 7 false > "$OUT/payload-nonascii-noproject.json"
+java -cp "/tmp/verify-tools:$CP" IdeaPayloadEmitter "44444444-4444-4444-4444-444444444444" "$NOW" \
+  /Users/liyang/IdeaProjects/foo /Users/liyang/IdeaProjects/foo/src - 0 0 false directory > "$OUT/payload-directory.json"
 cat "$OUT"/payload-*.json
 
 echo "### 4. host half end to end (stub cordis context)"
-for f in payload-selection payload-wholefile payload-nonascii-noproject; do
+for f in payload-selection payload-wholefile payload-nonascii-noproject payload-directory; do
   node "$REPO/docs/verification/host-half.test.mjs" "$OUT/$f.json" > "$OUT/host-half-$f.txt" 2>&1
   echo "$f: $(tail -1 "$OUT/host-half-$f.txt")"
 done

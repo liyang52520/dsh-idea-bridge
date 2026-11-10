@@ -1,8 +1,11 @@
-# IDEA ⇄ DSH 桥接契约 v1.1（冻结）
+# IDEA ⇄ DSH 桥接契约 v1.2（冻结）
 
 > 版本历史：v1.0 只有 `pending` + `ack` 两条路由，client 无单飞 → 双标签页/双会话会重复投递（见
 > `docs/verification.md` D2）。v1.1 新增 `claim` 做原子领取，并规定**跨版本降级**行为（D6）。
-> 消息文件形状（§3）**未变**，因此 `version` 仍为 1。
+> v1.2 消息新增**可选**字段 `kind`（`file` | `directory`）：IDEA 侧从项目树发送文件夹路径时置为
+> `directory`，client 据此跳过引用 chip（chip 的 `ref` 必须能按文件打开）。旧读取方忽略未知字段，
+> 旧 IDEA 插件不写该字段 → client 按 `file` 处理，因此消息形状仍向后兼容，`version` 保持 1。
+> 消息文件的其余形状（§3）未变。
 
 目标：IDEA 插件按下快捷键 → 文本出现在**用户已经开着的** DSH（桌面客户端或浏览器页面）的输入框里并提交。
 DSH 不再由 IDEA 插件启动。
@@ -53,6 +56,7 @@ IDEA 侧：默认 `~/.dsh/idea-bridge/inbox`；若 `location.json` 可读则以�
   "id": "8f1c...uuid",
   "createdAt": 1793000000000,
   "source": "idea-selection",
+  "kind": "file",
   "submit": true,
   "projectPath": "/Users/liyang/IdeaProjects/foo",
   "file": "/Users/liyang/IdeaProjects/foo/src/Bar.kt",
@@ -63,8 +67,11 @@ IDEA 侧：默认 `~/.dsh/idea-bridge/inbox`；若 `location.json` 可读则以�
 }
 ```
 
+- `kind`（v1.2 起，可选，缺省按 `file` 处理）：`file` = 编辑器选区/整文件，`directory` = 项目树里
+  选中的文件夹。目录消息的 `language` 为 `null`、`lineStart`/`lineEnd` 为 0，`text` 为
+  `@<绝对路径> `（无行号）。client 对 `directory` **不得**尝试引用 chip，只能 `insertText`。
 - `text` 是**唯一**会被写进 composer 的内容，格式固定为 `@<绝对路径>#L<起>[-<止>]` + 一个尾随空格；
-  无选区（整文件）时为 `@<绝对路径> `。
+  无选区（整文件）或文件/文件夹路径引用时为 `@<绝对路径> `。
 - `file`/`lineStart`/`lineEnd`/`language`/`projectPath` 仅供桥接侧匹配会话与提示，不进入 composer。
 
 ## 4. 本地路由（同一 DSH 进程内，走 `ctx.webServer`）
@@ -114,6 +121,8 @@ IDEA 侧：默认 `~/.dsh/idea-bridge/inbox`；若 `location.json` 可读则以�
      这是"折叠 + 可点击 + 行号不丢"三者唯一的组合方式。
      注意 `span` 必须是折叠后的光标位置（chip 插入不会带前导空格），且 chip 的
      `insertReference` 自带尾随空格。
+   - **目录（`kind: "directory"`）永远不走 chip**：chip 的 `ref` 会被当作文件打开，目录会变成
+     死引用；直接 `insertText(item.text)`，草稿里就是纯文本 `@/path/to/folder `。
    - **降级**：chip 通道不存在 / 返回非 `true` / 抛错 → 退回 `insertText(纯文本, span)`。
      两条路径都失败才算这一轮失败（不 settled、不 ack，下一轮重试）。
    - 分隔规则：若插入点前面有字符且不是空白 → 先单独插入一个空格（chip 与纯文本都要），
@@ -130,6 +139,9 @@ IDEA 侧：默认 `~/.dsh/idea-bridge/inbox`；若 `location.json` 可读则以�
 ## 6. IDEA 侧对外行为
 
 - `Ctrl+Alt+K` / 编辑器右键 "Send Selection to DSH"：有选区发选区，无选区发整文件。
+- 项目树右键 "Send File/Folder Path to DSH" / 项目树获得焦点时按 `Ctrl+Alt+K`：把选中的
+  本地文件/文件夹路径按同样格式发出去（多选时每个条目一条消息，`kind` 分别为 `file`/`directory`）。
+  目录没有行号，也没有 chip。
 - **默认只填草稿**（`submit = false`）：引用放进 DSH 输入框，用户自己补话并回车。
   设置里可开启"自动提交"。
 - **投递结果判定（严格路由的配套）**：写入后 IDEA 侧**盯自己那个消息文件**最多 3.5s

@@ -26,11 +26,37 @@ class SelectionPayloadTest {
         val decoded = JsonCodec.decodeObject(json)
         assertEquals(
             setOf(
-                "version", "id", "createdAt", "source", "submit",
+                "version", "id", "createdAt", "source", "kind", "submit",
                 "projectPath", "file", "language", "lineStart", "lineEnd", "text",
             ),
             decoded.keys,
         )
+    }
+
+    @Test
+    fun `file selection is kind file`() {
+        val json = SelectionPayload.json("abc-123", 1793000000000L, submit = false, selection = sample())
+        assertEquals("file", JsonCodec.decodeObject(json)["kind"])
+    }
+
+    @Test
+    fun `directory selection is kind directory without lines`() {
+        val directory = IdeaBridge.Selection(
+            projectPath = "/Users/me/proj",
+            filePath = "/Users/me/proj/src",
+            language = null,
+            lineStart = 0,
+            lineEnd = 0,
+            text = "@/Users/me/proj/src ",
+            isDirectory = true,
+        )
+        val decoded = JsonCodec.decodeObject(SelectionPayload.json("dir-1", 1L, submit = false, selection = directory))
+        assertEquals("directory", decoded["kind"])
+        assertEquals("/Users/me/proj/src", decoded["file"])
+        assertEquals(null, decoded["language"])
+        assertEquals(0L, decoded["lineStart"])
+        assertEquals(0L, decoded["lineEnd"])
+        assertEquals("@/Users/me/proj/src ", decoded["text"])
     }
 
     @Test

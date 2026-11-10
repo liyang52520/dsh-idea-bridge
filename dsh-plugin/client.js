@@ -380,8 +380,17 @@ window.__ModuleLoader__.load({
                  * Prefer a real reference chip (collapses like a typed `@`); fall
                  * back to flat text when the composition refuses it. Either way the
                  * serialized text is `@<path>#L<a>-<b> `.
+                 *
+                 * Directories never get a chip: the chip's `ref` is opened as a
+                 * file when clicked/previewed, so a directory would produce a
+                 * dead reference. `kind` is the optional contract-v1.2 hint
+                 * (older IDEA plugins omit it -> treated as a file, unchanged
+                 * behaviour). A directory's `text` is already the plain
+                 * `@/path/to/folder ` form with no line range.
                  */
-                const chipped = insertReferenceChip(insertion, sessionId, item);
+                const chipped = item.kind === 'directory'
+                  ? false
+                  : insertReferenceChip(insertion, sessionId, item);
                 if (!chipped && actions.insertText(item.text, insertion) !== true) {
                   throw new Error('composer rejected the insertion');
                 }

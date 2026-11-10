@@ -2,15 +2,16 @@
 
 ## Project Overview
 
-一个 Kotlin IntelliJ Platform 插件，**只做一件事**：把编辑器里的选中代码以固定引用格式
-`@<绝对路径>#L<起>[-<止>]` 投递到**用户已经打开着的** DeepSeek Harness（桌面客户端或网页）。
+一个 Kotlin IntelliJ Platform 插件，**只做一件事**：把编辑器里的选中代码 / 项目树里选中的文件或
+文件夹以固定引用格式 `@<绝对路径>#L<起>[-<止>]`（文件/文件夹为 `@<绝对路径>`）投递到
+**用户已经打开着的** DeepSeek Harness（桌面客户端或网页）。
 
 它**不启动、不内嵌、不管理**任何 DSH 进程：没有 Node.js/DSH 路径设置，没有 JCEF 浏览器，
 没有 MCP 端点，没有 API Key，也不读 `~/.dsh/.credentials.yaml`。
 
 投递方式是往 `$DSH_HOME/idea-bridge/inbox` 写一个很小的 JSON 文件（原子写、0600），
 由同仓库的 DSH 侧插件 `dsh-plugin/`（npm 包名仍为 `@local/dsh-idea-bridge`）读取并写进 composer。
-**字段级契约见 [`docs/idea-bridge-contract.md`](docs/idea-bridge-contract.md)（v1.1，冻结）**——
+**字段级契约见 [`docs/idea-bridge-contract.md`](docs/idea-bridge-contract.md)（v1.2，冻结）**——
 改任何一侧的字段都必须同步改契约并在两侧同时改。
 
 ## Build & Test
@@ -19,10 +20,10 @@
 
 - macOS arm64（首要目标；`sendSelection` 的"聚焦 DSH 窗口"仅在 macOS 生效，其余跨平台）
 - JDK 17+
-- IntelliJ IDEA Ultimate 2026.2.1 at `/Applications/IntelliJ IDEA.app/Contents`
-- Gradle toolchain：IDE 自带的 JBR 25（`.../jbr/Contents/Home`）需通过
+- IntelliJ IDEA Ultimate 2026.3（build 263.7307.200）at `/Applications/IntelliJ IDEA.app/Contents`
+- Gradle toolchain：IDE 自带的 JBR（2026.3 为 JBR 25；`.../jbr/Contents/Home`）需通过
   `~/.gradle/gradle.properties` 的 `org.gradle.java.installations.paths` 注册 —— IPGP 2.12+
-  会把平台 Java（IDEA 2026.2 = Java 25）映射到编译任务上。
+  会把平台 Java（IDEA 2026.3 = Java 25）映射到编译任务上。
 - **不需要** Node.js / DSH 安装路径（已随战略收敛删除）
 
 ### Build
@@ -33,7 +34,7 @@ cd idea-plugin
   -PlocalIdePath="/Applications/IntelliJ IDEA.app/Contents"
 ```
 
-产物：`idea-plugin/build/distributions/dsh-idea-plugin-<version>.zip`（当前 2.0.0）
+产物：`idea-plugin/build/distributions/dsh-idea-plugin-<version>.zip`（当前 2.1.2）
 
 沙箱提示：Gradle 必须写 `~/.gradle`（wrapper 锁、依赖缓存、toolchain）。若会话是
 workspace-write 沙箱，这条命令会被拒；需要 danger-full-access。
@@ -46,8 +47,11 @@ workspace-write 沙箱，这条命令会被拒；需要 danger-full-access。
 - **`-PlocalIdePath` 必需** —— 否则 Gradle 会从 JetBrains 下载约 1.5GB 的平台 SDK。
 - 插桩与 searchable options 在 `build.gradle.kts` 的 `intellijPlatform` 扩展里关闭
   （不需要 `-x instrumentCode`）。
-- 兼容范围由 `intellijPlatform.pluginConfiguration.ideaVersion` 管理（241 → 262.\*）——
-  不要删，否则 IPGP 会把 `since-build` 默认成本地 IDE 的 build 号，悄悄收窄支持范围。
+- 兼容范围由 `intellijPlatform.pluginConfiguration.ideaVersion` 管理：`since-build` 显式钉在
+  241，`until-build` **不设置**（属性缺失 = 不限上限，IDEA 更新大版本后不会再把插件判为
+  "requires build 263.* or older"）。不要删这个块，否则 IPGP 会把 `since-build` 默认成本地
+  IDE 的 build 号，悄悄收窄支持范围。注意"不限上限"只保证装得上，不保证二进制兼容——平台
+  大版本升级后仍应跑一次 `test buildPlugin` 回归（API 变更会在编译期暴露）。
 - `compileKotlin`/`compileJava` 的字节码目标显式钉在 **Java 17**（任务级，覆盖 IPGP 的
   平台 Java 25 约定）：`since-build 241` 必须能在 JBR 17/21 的 IDE 上加载。
 - 已**不再**依赖 JCEF：`com.intellij.modules.jcef` 依赖、`META-INF/jcef.xml`、
@@ -75,7 +79,7 @@ idea-plugin/src/main/kotlin/com/yg/dsh/idea/
 │   └── SelectionText.kt     # 固定引用格式 @path#L10-20 + 尾随空格
 ├── i18n/I18nBundle.kt       # DynamicBundle 包装
 ├── settings/DshBridgeConfigurable.kt  # Settings → Tools → DeepSeek Harness Bridge（3 个开关/字段）
-├── ui/actions/SendSelectionAction.kt  # 唯一入口：Ctrl+Alt+K / 右键；失败回退剪贴板
+├── ui/actions/SendSelectionAction.kt  # 唯一入口：Ctrl+Alt+K / 编辑器右键 / 项目树右键（文件或文件夹，多选逐条）；失败回退剪贴板
 └── util/
     ├── JsonCodec.kt         # 极简 JSON（无 Gson 依赖），写消息 + 读握手文件
     ├── LanguageDetector.kt  # PSI 语言探测
@@ -96,15 +100,15 @@ dsh-plugin/                # DSH 侧插件（纯 ESM JS，无构建步骤）
 ### 端到端数据流
 
 ```
-IDEA: Ctrl+Alt+K
-  → SendSelectionAction（ReadAction.nonBlocking 取路径/语言/行号）
-  → SelectionText.format → "@/path/File.kt#L10-20 "
+IDEA: Ctrl+Alt+K（或项目树右键发送路径）
+  → SendSelectionAction（ReadAction.nonBlocking 取路径/语言/行号；项目树取 VIRTUAL_FILE_ARRAY）
+  → SelectionText.format → "@/path/File.kt#L10-20 " / "@/path/to/folder "（kind=directory）
   → IdeaBridge.send（SelectionPayload.json，临时文件 + ATOMIC_MOVE，0600）
   → $DSH_HOME/idea-bridge/inbox/<uuid>.json
 DSH: host 半 GET /idea-bridge/pending（不消费）
   → client 半**严格路由**：只挑 cwd 与 projectPath 相同的会话，其余跳过且不 ack
   → POST /idea-bridge/claim（原子领取，防双实例重复投递）
-  → 插入到光标处（绝不覆盖已有草稿；优先插入引用 chip，失败退回纯文本；必要时补分隔空格）
+  → 插入到光标处（绝不覆盖已有草稿；文件优先插入引用 chip，失败退回纯文本；目录永远只插纯文本；必要时补分隔空格）
   → submit=true 时再 inputActions.submit()（默认 false＝只填草稿）
   → POST /idea-bridge/ack {ids:[...]} → 删除 <id>.json 与 <id>.claim（幂等）
 IDEA: 盯自己的消息文件 ≤3.5s 判定结果 —— .claim 出现=已领取、.json 消失=已投递、
@@ -130,7 +134,7 @@ IDEA: 盯自己的消息文件 ≤3.5s 判定结果 —— .claim 出现=已领�
 | -------------------------------------------- | ------------------------------------------------ |
 | `$DSH_HOME/idea-bridge/location.json`        | DSH 侧握手文件（`inboxDir`、pid、心跳 updatedAt） |
 | `$DSH_HOME/idea-bridge/inbox/<uuid>.json`    | 一条待投递消息（契约 §3）                        |
-| `docs/idea-bridge-contract.md`               | 冻结的字段级契约 v1.1                            |
+| `docs/idea-bridge-contract.md`               | 冻结的字段级契约 v1.2                            |
 | `idea-plugin/src/test/.../SelectionTextTest.kt`    | 锁死固定格式                                     |
 | `idea-plugin/src/test/.../SelectionPayloadTest.kt` | 锁死消息 JSON 的键集合与取值                     |
 | `~/.dsh/profiles/{desktop,web}/package.json`       | 两个 profile 的 `link:` 必须指向 `.../dsh-idea-bridge/dsh-plugin` |

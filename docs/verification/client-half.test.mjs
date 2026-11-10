@@ -582,6 +582,34 @@ for (const mode of ['refuse', 'explode']) {
   await client.unmount();
 }
 
+// ---- 12e. a directory reference is plain text, never a chip (contract v1.2) --
+{
+  const id = nextId();
+  const directory = fresh(id, {
+    kind: 'directory',
+    submit: false,
+    file: '/Users/liyang/IdeaProjects/foo/src',
+    language: null,
+    lineStart: 0,
+    lineEnd: 0,
+    text: '@/Users/liyang/IdeaProjects/foo/src '
+  });
+  put(directory);
+  const chipsBefore = chipCalls.length;
+  // Even with a working chip channel, a directory must not become a file chip:
+  // its `ref` would be opened as a file when clicked/previewed.
+  chipMode = 'accept';
+  const actions = scriptedActions();
+  const client = await mount(propsFor('session-directory', fixture.projectPath, actions));
+  await advance(800);
+  equal('a directory is inserted as its plain path reference',
+    actions.calls, [['insertText', directory.text]]);
+  equal('a directory never asks for a reference chip', chipCalls.length, chipsBefore);
+  check('a directory message is acknowledged', !existsSync(messageFile(id)));
+  await client.unmount();
+  chipMode = 'refuse';
+}
+
 // ---- 13. cleanup -----------------------------------------------------------
 const pollTimersLeft = [...timers.values()].filter((t) => t.every === 400 || t.every === undefined);
 equal('unmount clears every poll timer (host sweeper heartbeat exempt)', pollTimersLeft.length, 0);

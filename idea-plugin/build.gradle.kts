@@ -6,7 +6,7 @@ plugins {
     kotlin("jvm") version "2.4.10"
     // IntelliJ Platform Gradle Plugin 2.x（org.jetbrains.intellij.platform）。
     // 1.x（org.jetbrains.intellij）官方已停止跟进，仅支持针对 ≤2024.1 的平台构建，
-    // 对 2024.2+ (242+) 平台——本机 SDK 为 IDEA 2026.2（build 262）——每次只打印迁移告警。
+    // 对 2024.2+ (242+) 平台——本机 SDK 为 IDEA 2026.3（build 263）——每次只打印迁移告警。
     // 版本配套：2.12.0 起 IPGP 要求 Gradle 9.0.0+，故 wrapper 一并升到 9.5.1；
     // Gradle 9 不兼容 Kotlin 2.0.x，Kotlin Gradle Plugin 同步升到 2.4.10
     //（Kotlin 官方兼容表：KGP 2.4.0–2.4.10 全支持 Gradle 7.6.3–9.5.0，见 kotlinlang.org/docs/gradle-configure-project.html）。
@@ -14,7 +14,7 @@ plugins {
 }
 
 group = "com.yg.dsh"
-version = "2.0.0"
+version = "2.1.2"
 
 repositories {
     mavenCentral()
@@ -71,14 +71,19 @@ tasks.withType<KotlinJvmCompile>().configureEach {
 // `$DSH_HOME/idea-bridge/inbox` 写消息文件。因此没有运行时打包/资源生成类任务，
 // processResources 无需额外依赖。
 intellijPlatform {
-    // 统一管理 plugin.xml 的 <idea-version>：不显式声明时 IPGP 会把 since-build 默认成
-    // 目标平台的 build 号（本地 SDK 为 262.9437），收窄插件兼容范围（本应支持 2024.1+）。
-    // 这里显式恢复 241 → 262.*（与 src/main/resources/META-INF/plugin.xml 硬编码值一致，
-    // patchPluginXml 会按此覆盖）。
+    // 统一管理 plugin.xml 的 <idea-version>：
+    // - since-build 显式钉在 241（本插件支持 2024.1+）。不显式设置时 IPGP 会把它默认成
+    //   本地 IDE 的 build 号，悄悄收窄支持范围。
+    // - until-build 刻意不设置：IPGP 的 patchPluginXml 在该值为空时会移除 until-build 属性
+    //   （PatchPluginXmlTask 里 until-build 分支带 removeIfNull 语义），最终 plugin.xml 就是
+    //   <idea-version since-build="241"/> —— 属性缺失 = **不设上限**。以后 IDEA 发布
+    //   2026.4/264 或更新版本时，不会再报 "requires build 263.* or older"。
+    //   代价是失去"官方验证过的上限"这层保险：平台大版本升级后仍应重新跑一次
+    //   test buildPlugin 回归（API 变更会在编译期暴露；本插件只依赖
+    //   com.intellij.modules.platform 与少量稳定 API）。
     pluginConfiguration {
         ideaVersion {
             sinceBuild.set("241")
-            untilBuild.set("262.*")
         }
     }
     // 本项目不涉及 forms / UI designer 等需字节码插桩的 API，显式关闭插桩，

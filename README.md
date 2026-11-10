@@ -5,14 +5,15 @@
 > This repository hosts both halves of the bridge: `idea-plugin/` (the IntelliJ plugin) and
 > `dsh-plugin/` (the DSH-side plugin, npm package `@local/dsh-idea-bridge`).
 
-**只做一件事**：把你在 IntelliJ IDEA 中选中的代码，以固定引用格式
-`@/path/File.kt#L10-20` 发送到**你已经打开着的** DeepSeek Harness（桌面客户端或网页）。
+**只做一件事**：把你在 IntelliJ IDEA 中选中的代码（或项目树里选中的文件/文件夹），以固定引用格式
+`@/path/File.kt#L10-20` / `@/path/to/Folder` 发送到**你已经打开着的** DeepSeek Harness（桌面客户端或网页）。
 
 > v2.0.0 起战略收敛：插件**不再**启动、内嵌或管理任何 DSH 进程，不再有内嵌 Web UI、
 > IDE MCP 端点、评审/快照、服务商配置与凭据同步。约 7000 行 → 约 600 行。
 
-One job only: send the code you selected in IntelliJ IDEA to the DeepSeek Harness window you
-already have open, as the fixed reference `@/path/File.kt#L10-20`.
+One job only: send the code you selected in IntelliJ IDEA — or the file/folder you selected in the
+Project view — to the DeepSeek Harness window you already have open, as the fixed reference
+`@/path/File.kt#L10-20` (paths without line numbers).
 
 > 声明 / Disclaimer：本插件非 DeepSeek 官方产品；DeepSeek Harness 与 DeepSeek 商标归其各自所有者。
 > This plugin is not an official DeepSeek product; DeepSeek Harness and the DeepSeek trademark belong
@@ -44,6 +45,8 @@ DSH 内部 API、不启动任何进程。DSH 侧插件用 DSH 自己的公开扩
 2. **DSH 侧**：按 [dsh-plugin/README.md](dsh-plugin/README.md) 把桥接插件 link 进你的
    DSH profile（桌面客户端与网页 profile 各一次），重启 DeepSeek Harness。
 3. 在 DeepSeek Harness 里打开与 IDEA 相同的项目目录；在 IDEA 中选中代码按 **Ctrl+Alt+K**。
+   要发送整个文件或文件夹，就在项目树里右键 → **发送文件/文件夹路径到 DSH**，或让项目树获得焦点后
+   按同一个 **Ctrl+Alt+K**（多选时每个条目各发一条；目录只发 `@/path/to/folder ` 纯文本）。
 
 ## 设置 / Settings
 
@@ -54,7 +57,7 @@ Settings → Tools → DeepSeek Harness Bridge：自动提交（默认**关**—
 
 ## 环境要求 / Requirements
 
-- IntelliJ IDEA Community / Ultimate **2024.1 – 2026.2**（build 241 – 262）
+- IntelliJ IDEA Community / Ultimate **2024.1 及以上**（build ≥ 241；不设上限，IDEA 大版本更新后无需重装）
 - 本机已安装并**正在运行** DeepSeek Harness，且已安装配套的 `dsh-idea-bridge` 插件
 - 不需要在插件里配置 Node.js / DSH 路径，也不需要 API Key
 

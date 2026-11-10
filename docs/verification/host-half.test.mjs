@@ -137,7 +137,7 @@ const payload = JSON.parse(res.body);
 equal('pending item count', payload.items.length, 1);
 equal('pending returns the file content verbatim (key order + values)', payload.items[0], fixture);
 equal('pending preserves every contract key', Object.keys(payload.items[0]).sort(),
-  ['createdAt', 'file', 'id', 'language', 'lineEnd', 'lineStart', 'projectPath', 'source', 'submit', 'text', 'version']);
+  ['createdAt', 'file', 'id', 'kind', 'language', 'lineEnd', 'lineStart', 'projectPath', 'source', 'submit', 'text', 'version']);
 check('createdAt survives as a JSON number', typeof payload.items[0].createdAt === 'number');
 check('lineStart survives as a JSON number', typeof payload.items[0].lineStart === 'number');
 

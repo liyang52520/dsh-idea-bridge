@@ -10,13 +10,13 @@ import com.yg.dsh.idea.bridge.SelectionText;
  *
  * Usage:
  *   java -cp <classes>:<kotlin-stdlib> IdeaPayloadEmitter \
- *        <id> <createdAt> <projectPath|-> <filePath> <language|-> <lineStart> <lineEnd> <submit>
+ *        <id> <createdAt> <projectPath|-> <filePath> <language|-> <lineStart> <lineEnd> <submit> [file|directory]
  * Prints the message file content on stdout.
  */
 public final class IdeaPayloadEmitter {
     public static void main(String[] args) {
-        if (args.length != 8) {
-            System.err.println("usage: IdeaPayloadEmitter <id> <createdAt> <projectPath|-> <filePath> <language|-> <lineStart> <lineEnd> <submit>");
+        if (args.length != 8 && args.length != 9) {
+            System.err.println("usage: IdeaPayloadEmitter <id> <createdAt> <projectPath|-> <filePath> <language|-> <lineStart> <lineEnd> <submit> [file|directory]");
             System.exit(2);
         }
         String id = args[0];
@@ -27,10 +27,11 @@ public final class IdeaPayloadEmitter {
         int lineStart = Integer.parseInt(args[5]);
         int lineEnd = Integer.parseInt(args[6]);
         boolean submit = Boolean.parseBoolean(args[7]);
+        boolean isDirectory = args.length > 8 && "directory".equals(args[8]);
 
         String text = SelectionText.INSTANCE.format(filePath, lineStart, lineEnd);
         IdeaBridge.Selection selection =
-                new IdeaBridge.Selection(projectPath, filePath, language, lineStart, lineEnd, text);
+                new IdeaBridge.Selection(projectPath, filePath, language, lineStart, lineEnd, text, isDirectory);
         System.out.println(SelectionPayload.INSTANCE.json(id, createdAt, submit, selection));
     }
 }

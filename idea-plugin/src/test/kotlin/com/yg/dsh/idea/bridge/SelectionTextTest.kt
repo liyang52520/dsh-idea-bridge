@@ -28,6 +28,12 @@ class SelectionTextTest {
     }
 
     @Test
+    fun `folder path has no line part`() {
+        // 项目树里选中目录：与整文件引用同形，只是路径指向目录（不带结尾斜杠）。
+        assertEquals("@/Users/me/proj/src ", SelectionText.format("/Users/me/proj/src", 0, 0))
+    }
+
+    @Test
     fun `windows separators are normalized`() {
         // `C:\proj\B.kt` → `C:/proj/B.kt`（反斜杠统一成斜杠，不额外补前导斜杠）
         assertEquals("@C:/proj/B.kt#L1-2 ", SelectionText.format("C:\\proj\\B.kt", 1, 2))

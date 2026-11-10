@@ -6,14 +6,14 @@
 
 DSH 侧插件，把 IntelliJ IDEA 插件写进 `$DSH_HOME/idea-bridge/inbox` 的消息文件
 投递到**用户已经开着的** DSH 的 composer 里。字段级契约：
-[`../docs/idea-bridge-contract.md`](../docs/idea-bridge-contract.md)（v1.1，冻结）。
+[`../docs/idea-bridge-contract.md`](../docs/idea-bridge-contract.md)（v1.2，冻结）。
 
 本包是纯 ESM JavaScript，**没有构建步骤**：`index.js`/`client.js` 就是最终产物。
 
 | 文件              | 作用                                                                         |
 | ----------------- | ---------------------------------------------------------------------------- |
 | `index.js`        | host 半：写握手文件 `location.json`、注册 `GET /idea-bridge/pending`、`POST /idea-bridge/claim`、`POST /idea-bridge/ack`、回收过期消息与过期领取标记 |
-| `client.js`       | client 半：占用 `conversation.input.dock`，轮询 pending → claim → 光标处插入（`insertText`，不覆盖已有草稿）(/`submit`) → ack |
+| `client.js`       | client 半：占用 `conversation.input.dock`，轮询 pending → claim → 光标处插入（文件优先引用 chip，目录只插纯文本；不覆盖已有草稿）(/`submit`) → ack |
 | `cordis.patch.yml`| bundle patch：`insert` 一条 `idea-bridge` / `@local/dsh-idea-bridge` 记录      |
 | `package.json`    | `dsh.bundle.patch` + `dsh.client`（`platform: web`、`immediately`、`inject`）  |
 

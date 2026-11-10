@@ -50,6 +50,11 @@ object IdeaBridge {
         val lineStart: Int,
         val lineEnd: Int,
         val text: String,
+        /**
+         * true = 选中的是项目树里的**目录**（契约 §3 的 `kind: "directory"`）。
+         * 目录没有行号，DSH 侧也不会为它插引用 chip（chip 的 `ref` 必须能当文件打开）。
+         */
+        val isDirectory: Boolean = false,
     )
 
     data class Result(
@@ -85,13 +90,26 @@ object IdeaBridge {
      * - 超时仍在 → 没有会话匹配这个项目；**只有确认没有 claim 时才撤回文件**，
      *   否则宁可留给对方投递，避免"已经写进输入框却又报失败"。
      */
-    fun awaitOutcome(result: Result, timeoutMillis: Long = DELIVERY_TIMEOUT_MILLIS): Outcome {
-        val target = result.target ?: return Outcome.UNADJUSTED
-        val claim = claimPathFor(target)
+    fun awaitOutcome(result: Result, timeoutMillis: Long = DELIVERY_TIMEOUT_MILLIS): Outcome =
+        awaitOutcomes(listOf(result), timeoutMillis)
+
+    /**
+     * [awaitOutcome] 的多条消息版本：一次发送多个文件/文件夹（项目树多选）时，等**全部**
+     * 消息都有结果，并把最坏的结果作为聚合结果返回（有条目没人接就算 [Outcome.UNADJUSTED]）。
+     */
+    fun awaitOutcomes(results: List<Result>, timeoutMillis: Long = DELIVERY_TIMEOUT_MILLIS): Outcome {
+        val targets = results.mapNotNull { it.target }.distinct()
+        if (targets.isEmpty()) return Outcome.UNADJUSTED
+        val claims = targets.map { claimPathFor(it) }
         val deadline = System.currentTimeMillis() + timeoutMillis
         while (System.currentTimeMillis() < deadline) {
-            if (Files.exists(claim)) return Outcome.CLAIMED
-            if (!Files.exists(target)) return Outcome.DELIVERED
+            // 每条消息要么已被领取、要么已消失（被 ack）就算有结果。
+            val allSettled = targets.indices.all { i ->
+                Files.exists(claims[i]) || !Files.exists(targets[i])
+            }
+            if (allSettled) {
+                return if (targets.none { Files.exists(it) }) Outcome.DELIVERED else Outcome.CLAIMED
+            }
             try {
                 Thread.sleep(DELIVERY_POLL_MILLIS)
             } catch (e: InterruptedException) {
@@ -99,19 +117,29 @@ object IdeaBridge {
                 break
             }
         }
-        return try {
-            if (Files.exists(claim)) {
-                Outcome.CLAIMED
-            } else if (Files.deleteIfExists(target)) {
-                LOG.info("no session claimed ${result.messageId}; withdrew the message file")
-                Outcome.UNADJUSTED
-            } else {
-                // 恰好在我们判定超时的一瞬间被 ack 了。
-                Outcome.DELIVERED
+        var withdrawn = false
+        var remaining = false
+        var claimed = false
+        for (i in targets.indices) {
+            if (Files.exists(claims[i])) {
+                claimed = true
+                continue
             }
-        } catch (e: Exception) {
-            LOG.warn("failed to withdraw unused message ${result.messageId}", e)
-            Outcome.UNADJUSTED
+            if (!Files.exists(targets[i])) continue
+            try {
+                if (Files.deleteIfExists(targets[i])) {
+                    LOG.info("no session claimed ${results.map { it.messageId }}; withdrew a message file")
+                    withdrawn = true
+                }
+            } catch (e: Exception) {
+                LOG.warn("failed to withdraw unused message ${results.map { it.messageId }}", e)
+                remaining = true
+            }
+        }
+        return when {
+            withdrawn || remaining -> Outcome.UNADJUSTED
+            claimed -> Outcome.CLAIMED
+            else -> Outcome.DELIVERED
         }
     }
 
