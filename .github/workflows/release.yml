@@ -1,12 +1,12 @@
 name: Release
 
-# 推送 v* tag 时：跑测试 + buildPlugin → 建 GitHub Release（附 zip）→ 生成/更新
-# updatePlugins.xml（IDEA 自定义插件仓库索引）并同时挂到该 Release 上。
+# 推送 v* tag 时：跑测试 + buildPlugin → 建 GitHub Release（附 zip）→ 把
+# updatePlugins.xml（IDEA 自定义插件仓库索引）和 zip 一起发布到 GitHub Pages。
 #
-# 索引的推荐给 IDEA 用的 URL（走 github.com，国内网络通常可达；raw.githubusercontent.com
-# 在部分网络会被 reset）：
-#   https://github.com/liyang52520/dsh-idea-bridge/releases/latest/download/updatePlugins.xml
-# 仓库里也保留一份 updatePlugins.xml（raw 可用时：main 分支的 raw 地址）。
+# IDEA 里填的仓库 URL（Pages，Fastly；本机实测 raw.githubusercontent.com 被 reset、
+# github.com HTTPS 也常超时，而 github.io 可达）：
+#   https://liyang52520.github.io/dsh-idea-bridge/updatePlugins.xml
+# 备用：仓库根的 updatePlugins.xml（raw 可达时）与 Release 资产（手动下载）。
 #
 # 用法：
 #   1. 改 idea-plugin/build.gradle.kts 里的 version（例如 2.1.4）
@@ -111,24 +111,35 @@ jobs:
               --generate-notes
           fi
 
-      - name: Update plugin repository index
+      - name: Publish plugin index and distribution (GitHub Pages)
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           TAG: ${{ steps.version.outputs.tag }}
           VERSION: ${{ steps.version.outputs.version }}
           ASSET: ${{ steps.dist.outputs.asset }}
+          ZIP: ${{ steps.dist.outputs.zip }}
         run: |
-          # 索引从 main 的最新提交生成，再提交回去；两个可用地址：
-          #   https://github.com/${GITHUB_REPOSITORY}/releases/latest/download/updatePlugins.xml  （推荐，走 github.com）
-          #   https://raw.githubusercontent.com/${GITHUB_REPOSITORY}/main/updatePlugins.xml        （raw 可达时）
+          # 索引和 zip 都发布到 GitHub Pages（*.github.io 走 Fastly）：
+          #   https://<owner>.github.io/<repo>/updatePlugins.xml
+          #   https://<owner>.github.io/<repo>/downloads/<asset>.zip
+          # 原因：本机实测 raw.githubusercontent.com 被连接重置，github.com HTTPS 也常超时；
+          # github.io（Fastly）可达，因此 IDEA 的更新检查走 Pages。
+          # 同时保留仓库根 updatePlugins.xml（raw 可达时的备用）和 Release 资产（手动下载）。
+          PAGES_BASE="https://${GITHUB_REPOSITORY_OWNER,,}.github.io/${GITHUB_REPOSITORY#*/}"
+
           git fetch origin main
           git checkout -B main origin/main
 
-          cat > updatePlugins.xml <<EOF
+          # Pages 站点根在 main 的 docs/；只保留当前版本的 zip，避免仓库无限膨胀
+          mkdir -p docs/downloads
+          rm -f docs/downloads/*.zip
+          cp "$ZIP" "docs/downloads/${ASSET}"
+
+          cat > docs/updatePlugins.xml <<EOF
           <?xml version="1.0" encoding="UTF-8"?>
           <plugins>
             <plugin id="com.yg.dsh.idea"
-                    url="https://github.com/${GITHUB_REPOSITORY}/releases/download/${TAG}/${ASSET}"
+                    url="${PAGES_BASE}/downloads/${ASSET}"
                     version="${VERSION}">
               <idea-version since-build="241"/>
               <name>DeepSeek Harness Bridge</name>
@@ -139,17 +150,17 @@ jobs:
             </plugin>
           </plugins>
           EOF
+          cp docs/updatePlugins.xml updatePlugins.xml
 
-          # 同一份索引挂到 Release 上，releases/latest/download/updatePlugins.xml 才能拿到最新
-          gh release upload "$TAG" updatePlugins.xml --clobber
-
-          if git diff --quiet -- updatePlugins.xml && git ls-files --error-unmatch updatePlugins.xml > /dev/null 2>&1; then
-            echo "updatePlugins.xml already points at ${TAG}; nothing to commit."
-            exit 0
-          fi
+          # Release 上也挂一份 zip 与索引，便于手动下载 / 备用
+          gh release upload "$TAG" "$ZIP" updatePlugins.xml --clobber
 
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add updatePlugins.xml
-          git commit -m "chore: publish ${TAG} in the plugin repository index"
+          git add docs/updatePlugins.xml docs/downloads updatePlugins.xml
+          if git diff --cached --quiet; then
+            echo "index/distribution already up to date for ${TAG}"
+            exit 0
+          fi
+          git commit -m "chore: publish ${TAG} plugin index and distribution"
           git push origin main

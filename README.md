@@ -50,26 +50,26 @@ DSH 内部 API、不启动任何进程。DSH 侧插件用 DSH 自己的公开扩
 
 ### 从 GitHub 更新（可选）/ Update from GitHub (optional)
 
-仓库根目录的 [`updatePlugins.xml`](updatePlugins.xml) 是一个 **IDEA 自定义插件仓库索引**，
-由 [`.github/workflows/release.yml`](.github/workflows/release.yml) 在推送 `v*` tag 时自动更新，
-并同时挂到每个 GitHub Release 上。配置一次后，新版本会直接出现在
+[`docs/updatePlugins.xml`](docs/updatePlugins.xml) 是一个 **IDEA 自定义插件仓库索引**，
+由 [`.github/workflows/release.yml`](.github/workflows/release.yml) 在推送 `v*` tag 时自动生成，
+连同 zip 一起发布到 GitHub Pages（站点根 = `main` 分支的 `docs/`）。配置一次后，新版本会直接出现在
 `Settings → Plugins → Updates`，不用再手动 Install from Disk：
 
 1. `Settings → Plugins → ⚙ → Manage Plugin Repositories → +`，填入
-   `https://github.com/liyang52520/dsh-idea-bridge/releases/latest/download/updatePlugins.xml`；
+   `https://liyang52520.github.io/dsh-idea-bridge/updatePlugins.xml`；
 2. 在本插件卡片上点「选择从何处获取更新 / Choose where to get updates from」，选中该仓库 → Apply
    （IDEA 2026.3 起每个插件都要记录更新来源，否则会一直提示“无法更新插件”）；
 3. 发新版：先改 `idea-plugin/build.gradle.kts` 里的 `version` 并提交，然后
    `git tag v<version> && git push origin v<version>` —— workflow 会跑测试、构建、创建 GitHub
-   Release，并把索引里的 `version`/`url` 指向新 Release（tag 与 version 不一致会直接失败）。
+   Release，并把索引和 zip 一起更新到 Pages（tag 与 version 不一致会直接失败）。
 
-> 为什么用 `releases/latest/download/...` 而不是 raw：部分网络下 `raw.githubusercontent.com`
-> 会被连接重置（本机实测），而 `github.com` 的 Release 下载是通的，所以索引默认挂在 Release 资产上。
-> 如果你的网络 raw 可达，也可以改用
-> `https://raw.githubusercontent.com/liyang52520/dsh-idea-bridge/main/updatePlugins.xml`（仓库里同样维护了一份）。
+> 为什么用 GitHub Pages：在本机网络上实测 `raw.githubusercontent.com` 会被连接重置、
+> `github.com` 的 HTTPS 也经常超时，而 `*.github.io`（Fastly）可达。仓库根的
+> [`updatePlugins.xml`](updatePlugins.xml) 与 Release 资产仍然保留，作为 raw / github.com
+> 可用时的备用地址。
 
-索引里只有 GitHub Releases 的 zip 链接；插件未签名，首次从自定义仓库安装/更新时 IDE 可能要求
-确认信任。为已存在的 tag 重跑发布可用 `gh workflow run release.yml -f tag=v<version>`。
+索引里只有 zip 链接；插件未签名，首次从自定义仓库安装/更新时 IDE 可能要求确认信任。
+为已存在的 tag 重跑发布可用 `gh workflow run release.yml -f tag=v<version>`。
 
 ## 设置 / Settings
 
@@ -101,11 +101,11 @@ DSH 侧插件是纯 ESM JavaScript，没有构建步骤（改完源码重启 DSH
 
 ```
 dsh-idea-bridge/
-├── .github/workflows/  # release.yml：打 v* tag → 测试/构建/发 Release/更新索引
-├── updatePlugins.xml   # IDEA 自定义插件仓库索引（raw 托管，由 release workflow 维护）
+├── .github/workflows/  # release.yml：打 v* tag → 测试/构建/发 Release/发 Pages
+├── updatePlugins.xml   # 索引副本（raw 备用；Pages 上的是 docs/updatePlugins.xml）
 ├── idea-plugin/    # IntelliJ 插件（Gradle 工程根：gradlew、build.gradle.kts、src/）
 ├── dsh-plugin/     # DSH 侧插件（@local/dsh-idea-bridge；index.js / client.js / cordis.patch.yml）
-├── docs/           # 字段级契约（冻结）+ 独立验证报告与复现脚本
+├── docs/           # 字段级契约 + 验证脚本；也是 GitHub Pages 站点根（updatePlugins.xml + downloads/）
 ├── AGENTS.md
 └── README.md
 ```
