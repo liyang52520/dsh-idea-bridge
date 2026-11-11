@@ -1,34 +1,50 @@
 name: Release
 
-# 推送 v* tag 时：跑测试 + buildPlugin → 建 GitHub Release（附 zip）→ 更新仓库根的
-# updatePlugins.xml（IDEA 自定义插件仓库索引，通过 raw.githubusercontent.com 提供）。
+# 推送 v* tag 时：跑测试 + buildPlugin → 建 GitHub Release（附 zip）→ 生成/更新
+# updatePlugins.xml（IDEA 自定义插件仓库索引）并同时挂到该 Release 上。
+#
+# 索引的推荐给 IDEA 用的 URL（走 github.com，国内网络通常可达；raw.githubusercontent.com
+# 在部分网络会被 reset）：
+#   https://github.com/liyang52520/dsh-idea-bridge/releases/latest/download/updatePlugins.xml
+# 仓库里也保留一份 updatePlugins.xml（raw 可用时：main 分支的 raw 地址）。
 #
 # 用法：
 #   1. 改 idea-plugin/build.gradle.kts 里的 version（例如 2.1.4）
 #   2. git commit && git push
 #   3. git tag v2.1.4 && git push origin v2.1.4
 # tag 与 build.gradle.kts 的 version 不一致时本工作流直接失败，避免发出错误的索引。
+#
+# workflow_dispatch：为已存在的 tag 重跑发布（例如 Release/资产丢了），填 tag 即可：
+#   gh workflow run release.yml -f tag=v2.1.4
 on:
   push:
     tags:
       - "v*"
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Existing v* tag to (re)publish, e.g. v2.1.4"
+        required: true
+        type: string
 
 permissions:
   contents: write
 
 concurrency:
-  group: release-${{ github.ref }}
+  group: release-${{ github.event.inputs.tag || github.ref_name }}
   cancel-in-progress: false
 
 jobs:
   release:
-    name: Build and publish ${{ github.ref_name }}
+    name: Build and publish ${{ github.event.inputs.tag || github.ref_name }}
     runs-on: ubuntu-latest
     timeout-minutes: 45
     steps:
       - name: Checkout
         uses: actions/checkout@v4
         with:
+          # push 时是触发的 tag；workflow_dispatch 时是输入的 tag
+          ref: ${{ github.event.inputs.tag || github.ref_name }}
           # 提交索引回 main 需要完整历史与可写的 token
           fetch-depth: 0
           persist-credentials: true
@@ -45,7 +61,7 @@ jobs:
       - name: Resolve version
         id: version
         env:
-          TAG: ${{ github.ref_name }}
+          TAG: ${{ github.event.inputs.tag || github.ref_name }}
         run: |
           VERSION="${TAG#v}"
           BUILD_VERSION="$(sed -n 's/^version = "\(.*\)"/\1/p' idea-plugin/build.gradle.kts)"
@@ -97,12 +113,14 @@ jobs:
 
       - name: Update plugin repository index
         env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           TAG: ${{ steps.version.outputs.tag }}
           VERSION: ${{ steps.version.outputs.version }}
           ASSET: ${{ steps.dist.outputs.asset }}
         run: |
-          # 索引始终从 main 的最新提交生成，再提交回去；raw 地址因此一直有效：
-          #   https://raw.githubusercontent.com/${GITHUB_REPOSITORY}/main/updatePlugins.xml
+          # 索引从 main 的最新提交生成，再提交回去；两个可用地址：
+          #   https://github.com/${GITHUB_REPOSITORY}/releases/latest/download/updatePlugins.xml  （推荐，走 github.com）
+          #   https://raw.githubusercontent.com/${GITHUB_REPOSITORY}/main/updatePlugins.xml        （raw 可达时）
           git fetch origin main
           git checkout -B main origin/main
 
@@ -121,6 +139,9 @@ jobs:
             </plugin>
           </plugins>
           EOF
+
+          # 同一份索引挂到 Release 上，releases/latest/download/updatePlugins.xml 才能拿到最新
+          gh release upload "$TAG" updatePlugins.xml --clobber
 
           if git diff --quiet -- updatePlugins.xml && git ls-files --error-unmatch updatePlugins.xml > /dev/null 2>&1; then
             echo "updatePlugins.xml already points at ${TAG}; nothing to commit."

@@ -44,13 +44,15 @@ workspace-write 沙箱，这条命令会被拒；需要 danger-full-access。
 - `.github/workflows/release.yml`：推送 `v*` tag 时在 GitHub Actions 上跑 `test buildPlugin`
   （CI 没有本地 IDE，不传 `-PlocalIdePath`，由 `build.gradle.kts` 下载
   `intellijIdeaCommunity(2024.1.7)`，与 `since-build 241` 对应），然后创建 GitHub Release
-  （附 `dsh-idea-plugin-<version>.zip`），并把仓库根的 `updatePlugins.xml` 里的
-  `version`/`url` 指向新 Release 后提交回 `main`。
+  （附 `dsh-idea-plugin-<version>.zip`），生成 `updatePlugins.xml` 并**同时挂到该 Release**
+  （供 `releases/latest/download` 使用），最后把仓库根的 `updatePlugins.xml` 提交回 `main`。
+  也支持 `workflow_dispatch`（`-f tag=v<version>`）为已有 tag 重跑发布。
 - **tag 必须与 `idea-plugin/build.gradle.kts` 的 `version` 一致**，不一致 workflow 直接失败；
   发版流程：改 version → commit/push → `git tag v<version> && git push origin v<version>`。
 - `updatePlugins.xml` 是 IDEA「自定义插件仓库」索引，用户侧在
   `Settings → Plugins → ⚙ → Manage Plugin Repositories` 填
-  `https://raw.githubusercontent.com/liyang52520/dsh-idea-bridge/main/updatePlugins.xml`，
+  `https://github.com/liyang52520/dsh-idea-bridge/releases/latest/download/updatePlugins.xml`
+  （**推荐**：走 github.com，本机实测 `raw.githubusercontent.com` 会被连接重置），
   再为插件选择更新来源即可（IDEA 2026.3 起不配置来源会提示 "Cannot update plugin"）。
   该文件由 workflow 维护，不要手改（仅首次提交时留一个指向当前版本的种子）。
 
@@ -81,7 +83,7 @@ workspace-write 沙箱，这条命令会被拒；需要 danger-full-access。
 ```
 dsh-idea-bridge/           # 仓库根（GitHub 仓库名 = 本地目录名）
 ├── .github/workflows/     # release.yml：打 v* tag → 测试/构建/GitHub Release/索引
-├── updatePlugins.xml      # IDEA 自定义插件仓库索引（raw 托管，由 release workflow 维护）
+├── updatePlugins.xml      # IDEA 自定义插件仓库索引（Release 资产 + main 提交）
 ├── idea-plugin/           # IntelliJ 插件（Gradle 工程根：./gradlew、build.gradle.kts、src/）
 ├── dsh-plugin/            # DSH 侧插件（npm 包名 @local/dsh-idea-bridge，纯 ESM JS，无构建步骤）
 ├── docs/                  # 字段级契约 + 独立验证报告/脚本
@@ -154,7 +156,7 @@ IDEA: 盯自己的消息文件 ≤3.5s 判定结果 —— .claim 出现=已领�
 | `$DSH_HOME/idea-bridge/location.json`        | DSH 侧握手文件（`inboxDir`、pid、心跳 updatedAt） |
 | `$DSH_HOME/idea-bridge/inbox/<uuid>.json`    | 一条待投递消息（契约 §3）                        |
 | `docs/idea-bridge-contract.md`               | 冻结的字段级契约 v1.2                            |
-| `updatePlugins.xml`                          | IDEA 自定义插件仓库索引（raw 托管，release workflow 维护） |
+| `updatePlugins.xml`                          | IDEA 自定义插件仓库索引（Release 资产 + main 提交，workflow 维护） |
 | `.github/workflows/release.yml`              | `v*` tag → 测试/构建/GitHub Release/更新索引     |
 | `idea-plugin/src/test/.../SelectionTextTest.kt`    | 锁死固定格式                                     |
 | `idea-plugin/src/test/.../SelectionPayloadTest.kt` | 锁死消息 JSON 的键集合与取值                     |
