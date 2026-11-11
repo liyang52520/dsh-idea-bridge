@@ -1,0 +1,134 @@
+name: Release
+
+# 推送 v* tag 时：跑测试 + buildPlugin → 建 GitHub Release（附 zip）→ 更新仓库根的
+# updatePlugins.xml（IDEA 自定义插件仓库索引，通过 raw.githubusercontent.com 提供）。
+#
+# 用法：
+#   1. 改 idea-plugin/build.gradle.kts 里的 version（例如 2.1.4）
+#   2. git commit && git push
+#   3. git tag v2.1.4 && git push origin v2.1.4
+# tag 与 build.gradle.kts 的 version 不一致时本工作流直接失败，避免发出错误的索引。
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  release:
+    name: Build and publish ${{ github.ref_name }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          # 提交索引回 main 需要完整历史与可写的 token
+          fetch-depth: 0
+          persist-credentials: true
+
+      - name: Set up JDK
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "21"
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v4
+
+      - name: Resolve version
+        id: version
+        env:
+          TAG: ${{ github.ref_name }}
+        run: |
+          VERSION="${TAG#v}"
+          BUILD_VERSION="$(sed -n 's/^version = "\(.*\)"/\1/p' idea-plugin/build.gradle.kts)"
+          echo "tag=$TAG" >> "$GITHUB_OUTPUT"
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          echo "build-version=$BUILD_VERSION" >> "$GITHUB_OUTPUT"
+          if [ -z "$BUILD_VERSION" ]; then
+            echo "::error::Cannot read the version from idea-plugin/build.gradle.kts"
+            exit 1
+          fi
+          if [ "$VERSION" != "$BUILD_VERSION" ]; then
+            echo "::error::Tag $TAG does not match idea-plugin/build.gradle.kts version $BUILD_VERSION. Bump the version, commit, and re-tag."
+            exit 1
+          fi
+
+      - name: Test and build plugin
+        working-directory: idea-plugin
+        # 不传 -PlocalIdePath：CI 上没有本地 IDE，走 build.gradle.kts 的
+        # intellijIdeaCommunity($platformVersion)（默认 2024.1.7，与本插件 since-build 241 一致）。
+        run: ./gradlew test buildPlugin --console=plain --stacktrace
+
+      - name: Locate distribution
+        id: dist
+        run: |
+          ZIP="$(find idea-plugin/build/distributions -maxdepth 1 -name '*.zip' | head -n 1)"
+          if [ -z "$ZIP" ]; then
+            echo "::error::buildPlugin produced no zip under idea-plugin/build/distributions"
+            exit 1
+          fi
+          echo "zip=$ZIP" >> "$GITHUB_OUTPUT"
+          echo "asset=$(basename "$ZIP")" >> "$GITHUB_OUTPUT"
+
+      - name: Create GitHub release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAG: ${{ steps.version.outputs.tag }}
+          VERSION: ${{ steps.version.outputs.version }}
+          ZIP: ${{ steps.dist.outputs.zip }}
+        run: |
+          if gh release view "$TAG" > /dev/null 2>&1; then
+            # 重跑工作流时保持幂等（gh release edit 没有 --generate-notes，notes 保持原样）
+            gh release upload "$TAG" "$ZIP" --clobber
+            gh release edit "$TAG" --title "DeepSeek Harness Bridge $VERSION"
+          else
+            gh release create "$TAG" "$ZIP#DeepSeek Harness Bridge $VERSION" \
+              --title "DeepSeek Harness Bridge $VERSION" \
+              --generate-notes
+          fi
+
+      - name: Update plugin repository index
+        env:
+          TAG: ${{ steps.version.outputs.tag }}
+          VERSION: ${{ steps.version.outputs.version }}
+          ASSET: ${{ steps.dist.outputs.asset }}
+        run: |
+          # 索引始终从 main 的最新提交生成，再提交回去；raw 地址因此一直有效：
+          #   https://raw.githubusercontent.com/${GITHUB_REPOSITORY}/main/updatePlugins.xml
+          git fetch origin main
+          git checkout -B main origin/main
+
+          cat > updatePlugins.xml <<EOF
+          <?xml version="1.0" encoding="UTF-8"?>
+          <plugins>
+            <plugin id="com.yg.dsh.idea"
+                    url="https://github.com/${GITHUB_REPOSITORY}/releases/download/${TAG}/${ASSET}"
+                    version="${VERSION}">
+              <idea-version since-build="241"/>
+              <name>DeepSeek Harness Bridge</name>
+              <vendor>YG</vendor>
+              <depends>com.intellij.modules.platform</depends>
+              <description>Send the code you selected in IntelliJ IDEA to the DeepSeek Harness window you already have open, as @/path/File.kt#L10-20 references.</description>
+              <change-notes>Release notes: https://github.com/${GITHUB_REPOSITORY}/releases/tag/${TAG}</change-notes>
+            </plugin>
+          </plugins>
+          EOF
+
+          if git diff --quiet -- updatePlugins.xml && git ls-files --error-unmatch updatePlugins.xml > /dev/null 2>&1; then
+            echo "updatePlugins.xml already points at ${TAG}; nothing to commit."
+            exit 0
+          fi
+
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add updatePlugins.xml
+          git commit -m "chore: publish ${TAG} in the plugin repository index"
+          git push origin main

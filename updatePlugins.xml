@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<plugins>
+  <plugin id="com.yg.dsh.idea"
+          url="https://github.com/liyang52520/dsh-idea-bridge/releases/download/v2.1.3/dsh-idea-plugin-2.1.3.zip"
+          version="2.1.3">
+    <idea-version since-build="241"/>
+    <name>DeepSeek Harness Bridge</name>
+    <vendor>YG</vendor>
+    <depends>com.intellij.modules.platform</depends>
+    <description>Send the code you selected in IntelliJ IDEA to the DeepSeek Harness window you already have open, as @/path/File.kt#L10-20 references.</description>
+    <change-notes>Release notes: https://github.com/liyang52520/dsh-idea-bridge/releases/tag/v2.1.3</change-notes>
+  </plugin>
+</plugins>

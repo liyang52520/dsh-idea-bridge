@@ -39,12 +39,29 @@ cd idea-plugin
 沙箱提示：Gradle 必须写 `~/.gradle`（wrapper 锁、依赖缓存、toolchain）。若会话是
 workspace-write 沙箱，这条命令会被拒；需要 danger-full-access。
 
+### Release / 从 GitHub 更新
+
+- `.github/workflows/release.yml`：推送 `v*` tag 时在 GitHub Actions 上跑 `test buildPlugin`
+  （CI 没有本地 IDE，不传 `-PlocalIdePath`，由 `build.gradle.kts` 下载
+  `intellijIdeaCommunity(2024.1.7)`，与 `since-build 241` 对应），然后创建 GitHub Release
+  （附 `dsh-idea-plugin-<version>.zip`），并把仓库根的 `updatePlugins.xml` 里的
+  `version`/`url` 指向新 Release 后提交回 `main`。
+- **tag 必须与 `idea-plugin/build.gradle.kts` 的 `version` 一致**，不一致 workflow 直接失败；
+  发版流程：改 version → commit/push → `git tag v<version> && git push origin v<version>`。
+- `updatePlugins.xml` 是 IDEA「自定义插件仓库」索引，用户侧在
+  `Settings → Plugins → ⚙ → Manage Plugin Repositories` 填
+  `https://raw.githubusercontent.com/liyang52520/dsh-idea-bridge/main/updatePlugins.xml`，
+  再为插件选择更新来源即可（IDEA 2026.3 起不配置来源会提示 "Cannot update plugin"）。
+  该文件由 workflow 维护，不要手改（仅首次提交时留一个指向当前版本的种子）。
+
 ### Constraints
 
 - IntelliJ Platform Gradle Plugin **2.18.1**（`org.jetbrains.intellij.platform`），
   **不是** 1.x 的 `org.jetbrains.intellij`（只支持 ≤2024.1）。需要 Gradle 9.0.0+：
   wrapper 是 **Gradle 9.5.1**，Kotlin Gradle Plugin **2.4.10**（KGP 2.0.x 与 Gradle 9 不兼容）。
-- **`-PlocalIdePath` 必需** —— 否则 Gradle 会从 JetBrains 下载约 1.5GB 的平台 SDK。
+- **本地构建必须传 `-PlocalIdePath`** —— 否则 Gradle 会从 JetBrains 下载约 1.5GB 的平台 SDK。
+  CI（release workflow）相反：没有本地 IDE，故意走下载路径（`intellijIdeaCommunity(2024.1.7)`，
+  可用 `-PplatformVersion` 覆盖）。
 - 插桩与 searchable options 在 `build.gradle.kts` 的 `intellijPlatform` 扩展里关闭
   （不需要 `-x instrumentCode`）。
 - 兼容范围由 `intellijPlatform.pluginConfiguration.ideaVersion` 管理：`since-build` 显式钉在
@@ -63,6 +80,8 @@ workspace-write 沙箱，这条命令会被拒；需要 danger-full-access。
 
 ```
 dsh-idea-bridge/           # 仓库根（GitHub 仓库名 = 本地目录名）
+├── .github/workflows/     # release.yml：打 v* tag → 测试/构建/GitHub Release/索引
+├── updatePlugins.xml      # IDEA 自定义插件仓库索引（raw 托管，由 release workflow 维护）
 ├── idea-plugin/           # IntelliJ 插件（Gradle 工程根：./gradlew、build.gradle.kts、src/）
 ├── dsh-plugin/            # DSH 侧插件（npm 包名 @local/dsh-idea-bridge，纯 ESM JS，无构建步骤）
 ├── docs/                  # 字段级契约 + 独立验证报告/脚本
@@ -135,6 +154,8 @@ IDEA: 盯自己的消息文件 ≤3.5s 判定结果 —— .claim 出现=已领�
 | `$DSH_HOME/idea-bridge/location.json`        | DSH 侧握手文件（`inboxDir`、pid、心跳 updatedAt） |
 | `$DSH_HOME/idea-bridge/inbox/<uuid>.json`    | 一条待投递消息（契约 §3）                        |
 | `docs/idea-bridge-contract.md`               | 冻结的字段级契约 v1.2                            |
+| `updatePlugins.xml`                          | IDEA 自定义插件仓库索引（raw 托管，release workflow 维护） |
+| `.github/workflows/release.yml`              | `v*` tag → 测试/构建/GitHub Release/更新索引     |
 | `idea-plugin/src/test/.../SelectionTextTest.kt`    | 锁死固定格式                                     |
 | `idea-plugin/src/test/.../SelectionPayloadTest.kt` | 锁死消息 JSON 的键集合与取值                     |
 | `~/.dsh/profiles/{desktop,web}/package.json`       | 两个 profile 的 `link:` 必须指向 `.../dsh-idea-bridge/dsh-plugin` |
