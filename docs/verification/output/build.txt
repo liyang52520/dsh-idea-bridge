@@ -7,14 +7,17 @@ Daemon will be stopped at the end of the build
 > Task :processResources
 > Task :generateManifest
 > Task :processTestResources
+
 > Task :compileKotlin
+w: file:///Users/liyang/IdeaProjects/dsh-idea-bridge/idea-plugin/src/main/kotlin/com/yg/dsh/idea/i18n/I18nBundle.kt:7:21 'constructor(p0: String): DynamicBundle' is deprecated. Deprecated in Java.
+
 > Task :compileJava NO-SOURCE
 > Task :classes
 > Task :jar
 > Task :composedJar
-> Task :prepareTestSandbox
+> Task :prepareTestSandbox UP-TO-DATE
 > Task :prepareTest
-> Task :prepareSandbox
+> Task :prepareSandbox UP-TO-DATE
 > Task :buildSearchableOptions SKIPPED
 > Task :prepareJarSearchableOptions SKIPPED
 > Task :jarSearchableOptions SKIPPED
@@ -25,7 +28,9 @@ Daemon will be stopped at the end of the build
 > Task :instrumentTestCode SKIPPED
 > Task :test
 
-BUILD SUCCESSFUL in 16s
-14 actionable tasks: 14 executed
+[Incubating] Problems report is available at: file:///Users/liyang/IdeaProjects/dsh-idea-bridge/idea-plugin/build/reports/problems/problems-report.html
+
+BUILD SUCCESSFUL in 13s
+14 actionable tasks: 12 executed, 2 up-to-date
 Consider enabling configuration cache to speed up this build: https://docs.gradle.org/9.5.1/userguide/configuration_cache_enabling.html
 exit=0

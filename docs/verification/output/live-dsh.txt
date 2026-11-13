@@ -1,4 +1,4 @@
-port=50210 pid=28289
+port=55502 pid=11174
 /idea-bridge/pending         401
 /idea-bridge/claim           401
 /idea-bridge/ack             401
@@ -10,6 +10,6 @@ port=50210 pid=28289
   "endpoint": "/idea-bridge/pending",
   "claimEndpoint": "/idea-bridge/claim",
   "ackEndpoint": "/idea-bridge/ack",
-  "pid": 28289,
-  "updatedAt": 1793071376532
+  "pid": 11174,
+  "updatedAt": 1794560589102
 }

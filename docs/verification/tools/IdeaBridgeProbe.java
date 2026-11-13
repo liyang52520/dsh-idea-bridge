@@ -56,7 +56,8 @@ public final class IdeaBridgeProbe {
                 "kotlin",
                 10,
                 20,
-                "@" + System.getenv("PROBE_FILE") + "#L10-20 ");
+                "@" + System.getenv("PROBE_FILE") + "#L10-20 ",
+                false);
 
         System.out.println("mode=" + mode);
         if (mode.equals("badoverride") || mode.equals("badoverride-send")) {

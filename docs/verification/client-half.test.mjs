@@ -42,9 +42,14 @@ function equal(name, actual, expected) {
 }
 
 // ---- virtual clock ---------------------------------------------------------
-/** Real timer, captured before the virtual clock replaces the global. */
+/**
+ * Real timer, captured before the virtual clock replaces the global. 10ms (not
+ * 3ms) leaves room for the full fetch-shim -> route handler -> fs promise
+ * chain to settle; a loaded machine otherwise lets test 1 assert before the
+ * ack unlink lands.
+ */
 const realSetTimeout = globalThis.setTimeout;
-const flushIO = () => new Promise((resolve) => realSetTimeout(resolve, 3));
+const flushIO = () => new Promise((resolve) => realSetTimeout(resolve, 10));
 let nowMs = 0;
 let seq = 0;
 const timers = new Map();
@@ -189,6 +194,15 @@ let Component;
  */
 const chipCalls = [];
 let chipMode = 'refuse';
+/**
+ * When set (`{}`), models DSH's `insertReference` serialization for an accepted
+ * chip: the draft text becomes `clipboardText` plus the trailing space the
+ * runtime appends when the next character is not already a space
+ * (`ReferenceChipNode` text is `clipboardText`; `insertReference` at
+ * `conversation.client.js:15134-15140`). Tests that need the resulting draft
+ * initialize it before mounting.
+ */
+let chipDraft;
 clientModule.apply({
   slots: {
     inject(name, cb) { equal('slots.inject name', name, 'conversation.input.dock'); cb(); },
@@ -203,7 +217,10 @@ clientModule.apply({
           bail(event, payload) {
             if (event !== 'slash/input-insert-reference') return undefined;
             chipCalls.push({ sessionId, payload });
-            if (chipMode === 'accept') return true;
+            if (chipMode === 'accept') {
+              if (chipDraft !== undefined) chipDraft.text = `${payload.reference.clipboardText} `;
+              return true;
+            }
             return undefined;
           }
         };
@@ -582,9 +599,50 @@ for (const mode of ['refuse', 'explode']) {
   await client.unmount();
 }
 
-// ---- 12e. a directory reference is plain text, never a chip (contract v1.2) --
+// ---- 12e. a directory gets a folder chip, never a file chip (contract v1.3) --
 {
   const id = nextId();
+  const directory = fresh(id, {
+    kind: 'directory',
+    submit: false,
+    file: '/Users/liyang/IdeaProjects/foo/src',
+    language: null,
+    lineStart: 0,
+    lineEnd: 0,
+    text: '@/Users/liyang/IdeaProjects/foo/src/ '
+  });
+  put(directory);
+  const chipsBefore = chipCalls.length;
+  chipMode = 'accept';
+  chipDraft = {};
+  const actions = scriptedActions();
+  const client = await mount(propsFor('session-directory', fixture.projectPath, actions));
+  await advance(800);
+  equal('the folder chip serializes back to the contract text',
+    chipDraft.text, directory.text);
+  equal('a directory asks for exactly one reference chip', chipCalls.length, chipsBefore + 1);
+  equal('the directory chip is a folder-appearance mention with the trailing slash',
+    chipCalls[chipCalls.length - 1].payload.reference,
+    {
+      source: 'reference',
+      ref: '@/Users/liyang/IdeaProjects/foo/src/',
+      label: 'src/',
+      appearance: 'folder',
+      clipboardText: '@/Users/liyang/IdeaProjects/foo/src/'
+    });
+  check('a folder chip never carries a #L range',
+    !chipCalls[chipCalls.length - 1].payload.reference.ref.includes('#L'));
+  equal('a folder chip is not duplicated as flat text', actions.calls, []);
+  check('a directory message is acknowledged', !existsSync(messageFile(id)));
+  await client.unmount();
+  chipMode = 'refuse';
+  chipDraft = undefined;
+}
+
+// ---- 12f. no chip channel: a directory still gets the trailing slash --------
+{
+  const id = nextId();
+  // Written by a v1.2 IDEA plugin: the trailing slash is missing from `text`.
   const directory = fresh(id, {
     kind: 'directory',
     submit: false,
@@ -595,19 +653,49 @@ for (const mode of ['refuse', 'explode']) {
     text: '@/Users/liyang/IdeaProjects/foo/src '
   });
   put(directory);
-  const chipsBefore = chipCalls.length;
-  // Even with a working chip channel, a directory must not become a file chip:
-  // its `ref` would be opened as a file when clicked/previewed.
-  chipMode = 'accept';
+  chipMode = 'refuse';
   const actions = scriptedActions();
-  const client = await mount(propsFor('session-directory', fixture.projectPath, actions));
+  const client = await mount(propsFor('session-directory-flat', fixture.projectPath, actions));
   await advance(800);
-  equal('a directory is inserted as its plain path reference',
-    actions.calls, [['insertText', directory.text]]);
-  equal('a directory never asks for a reference chip', chipCalls.length, chipsBefore);
-  check('a directory message is acknowledged', !existsSync(messageFile(id)));
+  equal('flat-text fallback rebuilds an old directory message with the trailing slash',
+    actions.calls, [['insertText', '@/Users/liyang/IdeaProjects/foo/src/ ']]);
+  check('the normalized directory message is acknowledged', !existsSync(messageFile(id)));
+  await client.unmount();
+}
+
+// ---- 12g. a directory with spaces uses the quoted mention grammar ----------
+{
+  const id = nextId();
+  const directory = fresh(id, {
+    kind: 'directory',
+    submit: false,
+    file: '/Users/liyang/IdeaProjects/foo/my dir',
+    language: null,
+    lineStart: 0,
+    lineEnd: 0,
+    text: '@/Users/liyang/IdeaProjects/foo/my dir/ '
+  });
+  put(directory);
+  chipMode = 'accept';
+  chipDraft = {};
+  const actions = scriptedActions();
+  const client = await mount(propsFor('session-directory-spaces', fixture.projectPath, actions));
+  await advance(800);
+  equal('a spaced folder chip serializes back to a slash-terminated quoted mention',
+    chipDraft.text, '@"/Users/liyang/IdeaProjects/foo/my dir/" ');
+  equal('a spaced directory mention is quoted and slash-terminated',
+    chipCalls[chipCalls.length - 1].payload.reference.ref,
+    '@"/Users/liyang/IdeaProjects/foo/my dir/"');
+  equal('a spaced directory chip keeps the folder appearance and label',
+    {
+      appearance: chipCalls[chipCalls.length - 1].payload.reference.appearance,
+      label: chipCalls[chipCalls.length - 1].payload.reference.label
+    },
+    { appearance: 'folder', label: 'my dir/' });
+  check('a spaced directory message is acknowledged', !existsSync(messageFile(id)));
   await client.unmount();
   chipMode = 'refuse';
+  chipDraft = undefined;
 }
 
 // ---- 13. cleanup -----------------------------------------------------------

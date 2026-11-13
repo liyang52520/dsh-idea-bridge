@@ -15,8 +15,9 @@ object SelectionPayload {
                 "id" to id,
                 "createdAt" to createdAt,
                 "source" to "idea-selection",
-                // 契约 v1.2：`file` 可能是文件，也可能是项目树里选中的目录。目录不带行号，
-                // DSH 侧据此跳过引用 chip（chip 的 ref 必须是能按文件打开的路径）。
+                // 契约 v1.3：`file` 可能是文件，也可能是项目树里选中的目录。目录不带行号，
+                // `text` 带尾随斜杠；DSH 侧据此插入 appearance="folder" 的文件夹 chip
+                // （非 file 外观的 chip 不会被当作文件打开）。
                 "kind" to if (selection.isDirectory) "directory" else "file",
                 "submit" to submit,
                 "projectPath" to selection.projectPath,

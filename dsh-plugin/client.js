@@ -6,9 +6,10 @@
  * is visible, polls `GET /idea-bridge/pending` for message files the IDEA
  * plugin wrote, **claims** them with `POST /idea-bridge/claim` so only one of
  * possibly several UI instances (two tabs, two windows) may deliver each
- * message, writes `text` into this session's composer draft with the slot
- * standard props' `inputActions.setDraft(text)`, submits when the message asks
- * for it, and then acknowledges the ids with `POST /idea-bridge/ack`.
+ * message, inserts the reference into this session's composer at the caret
+ * (a real reference chip via the slot standard props' `inputActions`, plain
+ * text as fallback), submits when the message asks for it, and then
+ * acknowledges the ids with `POST /idea-bridge/ack`.
  *
  * Evidence for every API used here, in the shipped runtime:
  *
@@ -66,7 +67,7 @@ window.__ModuleLoader__.load({
     let pluginContext;
 
     /**
-     * Format an absolute path as the composer's file mention: `@path`, or
+     * Format an absolute path as the composer's mention: `@path`, or
      * `@"path with spaces"`. Mirrors `@deepseek-ai/dsh-file-reference`'s
      * `formatFileMention` (browser-safe grammar shared by both clients).
      */
@@ -76,10 +77,19 @@ window.__ModuleLoader__.load({
       return /\s/u.test(path) ? `@"${path}"` : `@${path}`;
     }
 
-    /** The last path segment, used as the chip label. */
+    /** `/abs/dir` -> `/abs/dir/`: the trailing slash is DSH's directory marker. */
+    function directoryPath(path) {
+      return `${path.replace(/[\\/]+$/u, '')}/`;
+    }
+
+    /**
+     * The last path segment, used as the chip label. A directory's trailing
+     * slash is not part of its name (the chip label adds its own).
+     */
     function baseName(path) {
-      const at = Math.max(path.lastIndexOf('/'), path.lastIndexOf('\\'));
-      return at < 0 ? path : path.slice(at + 1);
+      const trimmed = path.replace(/[\\/]+$/u, '');
+      const at = Math.max(trimmed.lastIndexOf('/'), trimmed.lastIndexOf('\\'));
+      return at < 0 ? trimmed : trimmed.slice(at + 1);
     }
 
     /** `#L<start>` or `#L<start>-<end>`, or '' for a whole-file reference. */
@@ -91,19 +101,63 @@ window.__ModuleLoader__.load({
     }
 
     /**
+     * The plain-text form of one message's reference (the fallback when the
+     * composer refuses a chip). For a directory it is rebuilt from `file`
+     * instead of trusting `text`, so a message written by an older IDEA plugin
+     * (which omitted the trailing slash) still reaches the composer in DSH's
+     * directory grammar.
+     */
+    function plainText(item) {
+      if (item.kind !== 'directory') return item.text;
+      if (typeof item.file !== 'string' || item.file.length === 0) return item.text;
+      const mention = fileMention(directoryPath(item.file));
+      return mention === undefined ? item.text : `${mention} `;
+    }
+
+    /**
+     * The structured reference one message inserts, or undefined when the path
+     * cannot be represented in the mention grammar.
+     *
+     * A file gets `appearance: 'file'`; a directory gets `appearance: 'folder'`.
+     * DSH renders a folder chip with the folder icon, and `openReference`
+     * refuses to open a non-file chip (`if (appearance !== 'file') return
+     * false` in `@deepseek-ai/dsh-client-ui-reference`), so a directory can
+     * never become a dead "file does not exist" reference. The trailing slash
+     * is DSH's own directory marker; it is also what makes the sent transcript
+     * re-render the mention as a folder chip.
+     */
+    function chipReference(item) {
+      if (typeof item.file !== 'string' || item.file.length === 0) return undefined;
+      const directory = item.kind === 'directory';
+      const path = directory ? directoryPath(item.file) : item.file;
+      const mention = fileMention(path);
+      if (mention === undefined) return undefined;
+      return {
+        source: 'reference',
+        ref: mention,
+        label: directory ? `${baseName(item.file)}/` : baseName(item.file),
+        appearance: directory ? 'folder' : 'file',
+        // What the composer serializes back to; a file's line range is appended
+        // separately (DSH's mention grammar has no `#L` form).
+        clipboardText: mention
+      };
+    }
+
+    /**
      * Insert one real reference chip (what typing `@` in the composer produces)
      * instead of flat text: the chip collapses visually and gives DSH a
-     * structured file reference.
+     * structured file/folder reference.
      *
-     * The line range rides inside `ref`/`clipboardText` because DSH's mention
-     * grammar is file-level only (there is no `#L` form); that keeps the
-     * serialized text byte-identical to the plain-text variant. If the
+     * DSH's mention grammar is file/folder-level only (there is no `#L` form),
+     * so `ref`/`clipboardText` hold just the clean mention; the caller appends
+     * a file's line range as separate text after the chip, and the chip's
+     * `clipboardText` is what the message serializes for the reference. If the
      * composition rejects the chip (no listener, busy admission phase, unknown
      * session scope), the caller falls back to plain text — never a failure.
      *
      * @param span - collapsed caret span captured from the same draft revision.
      * @param sessionId - session whose scope owns the composer.
-     * @param item - the message payload (file + line range).
+     * @param item - the message payload (file/directory + line range).
      * @returns whether a chip was applied.
      */
     function insertReferenceChip(span, sessionId, item) {
@@ -111,21 +165,14 @@ window.__ModuleLoader__.load({
       if (ctx === undefined || typeof ctx.get !== 'function') return false;
       const sessions = ctx.get('sessions');
       if (sessions === undefined || typeof sessions.scope !== 'function' || sessionId === undefined) return false;
-      const mention = fileMention(item.file);
-      if (mention === undefined) return false;
       /*
        * `ref` must stay a REAL path: the composer resolves it when the chip is
        * clicked or previewed (`openReference` strips the leading `@`), so a
-       * `#L` suffix there yields "file does not exist". The line range lives in
-       * `clipboardText` only, which is what the message text serializes to.
+       * `#L` suffix there yields "file does not exist". The line range is
+       * appended after the chip as separate text by the caller, never here.
        */
-      const reference = {
-        source: 'reference',
-        ref: mention,
-        label: baseName(item.file),
-        appearance: 'file',
-        clipboardText: mention
-      };
+      const reference = chipReference(item);
+      if (reference === undefined) return false;
       let scope;
       try {
         scope = sessions.scope(sessionId);
@@ -332,7 +379,7 @@ window.__ModuleLoader__.load({
               if (cancelled) return;
               /*
                * Deliver only what this instance holds. An id we already hold
-               * but never settled (a previous `setDraft` threw) is retried
+               * but never settled (a previous insertion threw) is retried
                * here, which is why a claim is not re-requested for it.
                */
               if (!held.has(item.id) || settled.has(item.id)) continue;
@@ -379,19 +426,17 @@ window.__ModuleLoader__.load({
                 /*
                  * Prefer a real reference chip (collapses like a typed `@`); fall
                  * back to flat text when the composition refuses it. Either way the
-                 * serialized text is `@<path>#L<a>-<b> `.
+                 * serialized text is `@<path>#L<a>-<b> ` for a file, and
+                 * `@<path>/ ` (trailing slash = directory marker) for a directory.
                  *
-                 * Directories never get a chip: the chip's `ref` is opened as a
-                 * file when clicked/previewed, so a directory would produce a
-                 * dead reference. `kind` is the optional contract-v1.2 hint
-                 * (older IDEA plugins omit it -> treated as a file, unchanged
-                 * behaviour). A directory's `text` is already the plain
-                 * `@/path/to/folder ` form with no line range.
+                 * Directories get `appearance: 'folder'` (contract v1.3): DSH
+                 * renders the folder icon and never opens that chip as a file, so
+                 * it is the same artifact the `@` picker produces for a folder.
+                 * `kind` is the optional contract-v1.2 hint (older IDEA plugins
+                 * omit it -> treated as a file, unchanged behaviour).
                  */
-                const chipped = item.kind === 'directory'
-                  ? false
-                  : insertReferenceChip(insertion, sessionId, item);
-                if (!chipped && actions.insertText(item.text, insertion) !== true) {
+                const chipped = insertReferenceChip(insertion, sessionId, item);
+                if (!chipped && actions.insertText(plainText(item), insertion) !== true) {
                   throw new Error('composer rejected the insertion');
                 }
                 /*
@@ -403,10 +448,10 @@ window.__ModuleLoader__.load({
                 settled.add(item.id);
                 unacked.add(item.id);
                 /*
-                 * A chip is a file reference and carries no line range (DSH's
-                 * mention grammar is file-level), so the range follows the chip
-                 * as text: `[chip] #L10-20`. That is what the agent reads. A
-                 * failure here must never cause a second insertion.
+                 * A chip carries no line range (DSH's mention grammar is
+                 * file/folder-level), so the range follows the chip as text:
+                 * `[chip] #L10-20`. That is what the agent reads. A failure
+                 * here must never cause a second insertion.
                  */
                 if (chipped) {
                   const range = lineRange(item);

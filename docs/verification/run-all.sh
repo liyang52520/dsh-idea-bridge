@@ -126,6 +126,8 @@ echo "### 8. reverse checks"
 cat "$OUT/reverse-checks.txt"
 
 echo "### 9. verdict"
+build_exit="$(grep -a '^exit=' "$OUT/build.txt" 2>/dev/null | tail -1 | cut -d= -f2)"
+if [ "${build_exit:-1}" != "0" ]; then echo "Gradle build/test exit: ${build_exit:-unknown} (see $OUT/build.txt)"; echo "VERDICT: FAIL (build step)"; exit 1; fi
 fail_count="$(grep -a -h -c "^FAIL " "$OUT"/host-half-*.txt "$OUT"/client-half.txt "$OUT"/claim-adversarial.txt "$OUT"/repro-reapply.txt 2>/dev/null | paste -sd+ - | bc)"
 defect_count="$(grep -a -h "^DEFECT " "$OUT"/client-half.txt "$OUT"/repro-claim-missing.txt 2>/dev/null | wc -l | tr -d ' ')"
 echo "harness assertion failures: ${fail_count:-0}"

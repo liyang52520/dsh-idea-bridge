@@ -1,11 +1,16 @@
-# IDEA ⇄ DSH 桥接契约 v1.2（冻结）
+# IDEA ⇄ DSH 桥接契约 v1.3（冻结）
 
 > 版本历史：v1.0 只有 `pending` + `ack` 两条路由，client 无单飞 → 双标签页/双会话会重复投递（见
 > `docs/verification.md` D2）。v1.1 新增 `claim` 做原子领取，并规定**跨版本降级**行为（D6）。
 > v1.2 消息新增**可选**字段 `kind`（`file` | `directory`）：IDEA 侧从项目树发送文件夹路径时置为
-> `directory`，client 据此跳过引用 chip（chip 的 `ref` 必须能按文件打开）。旧读取方忽略未知字段，
-> 旧 IDEA 插件不写该字段 → client 按 `file` 处理，因此消息形状仍向后兼容，`version` 保持 1。
-> 消息文件的其余形状（§3）未变。
+> `directory`。旧读取方忽略未知字段，旧 IDEA 插件不写该字段 → client 按 `file` 处理，因此消息形状
+> 仍向后兼容，`version` 保持 1。
+> v1.3 目录引用改用 DSH 自己的目录语法：`text` 为 `@<绝对路径>/ `（**尾随斜杠**是目录标记，见
+> `@deepseek-ai/dsh-file-reference` 的 `formatFileMention` 与模型提示词 "A trailing slash marks
+> a directory"）；client 对目录优先插入 `appearance: "folder"` 的引用 chip（DSH 的文件夹 chip，
+> 不可按文件打开），失败再退回带斜杠的纯文本。消息形状与 `version` 都不变：v1.2 的 IDEA 插件
+> （目录 `text` 无斜杠）仍被新 client 归一化后投递，v1.3 的 `text` 在旧 client 里只是纯文本，
+> 发送后同样会按文件夹渲染。
 
 目标：IDEA 插件按下快捷键 → 文本出现在**用户已经开着的** DSH（桌面客户端或浏览器页面）的输入框里并提交。
 DSH 不再由 IDEA 插件启动。
@@ -69,10 +74,14 @@ IDEA 侧：默认 `~/.dsh/idea-bridge/inbox`；若 `location.json` 可读则以�
 
 - `kind`（v1.2 起，可选，缺省按 `file` 处理）：`file` = 编辑器选区/整文件，`directory` = 项目树里
   选中的文件夹。目录消息的 `language` 为 `null`、`lineStart`/`lineEnd` 为 0，`text` 为
-  `@<绝对路径> `（无行号）。client 对 `directory` **不得**尝试引用 chip，只能 `insertText`。
+  `@<绝对路径>/ `（无行号，**尾随斜杠标记目录**）。client 对 `directory` 插入
+  `appearance: "folder"` 的引用 chip（DSH 的文件夹 chip，不可按文件打开）；chip 通道不可用时
+  退回 `insertText`，且文本仍必须是带尾随斜杠的形式。
 - `text` 是**唯一**会被写进 composer 的内容，格式固定为 `@<绝对路径>#L<起>[-<止>]` + 一个尾随空格；
-  无选区（整文件）或文件/文件夹路径引用时为 `@<绝对路径> `。
-- `file`/`lineStart`/`lineEnd`/`language`/`projectPath` 仅供桥接侧匹配会话与提示，不进入 composer。
+  无选区（整文件）或文件路径引用时为 `@<绝对路径> `；**目录为 `@<绝对路径>/ `**（尾随斜杠）。
+  路径含空白时按 DSH mention 语法加引号：`@"<绝对路径>"#L<起>[-<止>] ` / 目录 `@"<绝对路径>/" `。
+- `file`/`lineStart`/`lineEnd`/`language`/`projectPath` 仅供桥接侧匹配会话与提示；v1.3 起 client
+  还会用 `file` 归一化旧版 IDEA 插件的目录 `text`（补尾随斜杠，§5.3），其余不进入 composer。
 
 ## 4. 本地路由（同一 DSH 进程内，走 `ctx.webServer`）
 
@@ -100,7 +109,7 @@ IDEA 侧：默认 `~/.dsh/idea-bridge/inbox`；若 `location.json` 可读则以�
 `sessionId`、`inputActions`（`captureInsertion()` / `insertText(text, span)` / `submit()`）
 与 `useInput`（读 `state.draft`），按以下顺序：
 
-1. 仅在 `document.visibilityState === "visible"` 时轮询，间隔 1500ms（首次启动延迟 800ms）。
+1. 仅在 `document.visibilityState === "visible"` 时轮询，间隔 400ms（首次启动延迟 300ms）。
 2. 对每条 item：
    - **严格路由**：若本会话的 cwd 可知且与 `projectPath` 不一致 → **跳过，永不投递**，也不 ack。
      理由：`@/绝对路径#Lxx` 这类引用只有在会话自己的工作区里才能被 agent 解析，投给别的项目会话
@@ -121,8 +130,13 @@ IDEA 侧：默认 `~/.dsh/idea-bridge/inbox`；若 `location.json` 可读则以�
      这是"折叠 + 可点击 + 行号不丢"三者唯一的组合方式。
      注意 `span` 必须是折叠后的光标位置（chip 插入不会带前导空格），且 chip 的
      `insertReference` 自带尾随空格。
-   - **目录（`kind: "directory"`）永远不走 chip**：chip 的 `ref` 会被当作文件打开，目录会变成
-     死引用；直接 `insertText(item.text)`，草稿里就是纯文本 `@/path/to/folder `。
+   - **目录（`kind: "directory"`）走 `appearance: "folder"` 的 chip**：`ref` 是带尾随斜杠的
+     mention（`@/path/to/folder/`；含空格时用**闭合**引号 `@"path with spaces/"`——DSH 的 `@`
+     选择器在补全过程中用未闭合引号以便继续下钻，这里是一次性完整引用，闭合形式与 DSH 的
+     拖拽插入一致且能被 `folderReferenceRule` 解析），`label` 是 `<目录名>/`，`clipboardText`
+     同上。DSH 渲染文件夹图标，且 `openReference` 对非 `file` 外观直接返回 false，因此不会变成
+     "文件不存在"的死引用。chip 通道不可用时退回 `insertText`，文本取 `@<绝对路径>/ `（若旧
+     IDEA 插件发的 `text` 缺斜杠，client 依 `file` 归一化后再插）。
    - **降级**：chip 通道不存在 / 返回非 `true` / 抛错 → 退回 `insertText(纯文本, span)`。
      两条路径都失败才算这一轮失败（不 settled、不 ack，下一轮重试）。
    - 分隔规则：若插入点前面有字符且不是空白 → 先单独插入一个空格（chip 与纯文本都要），
@@ -141,7 +155,7 @@ IDEA 侧：默认 `~/.dsh/idea-bridge/inbox`；若 `location.json` 可读则以�
 - `Ctrl+Alt+K` / 编辑器右键 "Send Selection to DSH"：有选区发选区，无选区发整文件。
 - 项目树右键 "Send File/Folder Path to DSH" / 项目树获得焦点时按 `Ctrl+Alt+K`：把选中的
   本地文件/文件夹路径按同样格式发出去（多选时每个条目一条消息，`kind` 分别为 `file`/`directory`）。
-  目录没有行号，也没有 chip。
+  目录没有行号，文本带尾随斜杠（`@/path/to/folder/ `），在 DSH 里显示为文件夹 chip。
 - **默认只填草稿**（`submit = false`）：引用放进 DSH 输入框，用户自己补话并回车。
   设置里可开启"自动提交"。
 - **投递结果判定（严格路由的配套）**：写入后 IDEA 侧**盯自己那个消息文件**最多 3.5s

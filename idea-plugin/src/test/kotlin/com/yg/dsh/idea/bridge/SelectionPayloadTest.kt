@@ -47,7 +47,8 @@ class SelectionPayloadTest {
             language = null,
             lineStart = 0,
             lineEnd = 0,
-            text = "@/Users/me/proj/src ",
+            // 契约 v1.3：目录引用的 text 带尾随斜杠（DSH 的目录标记）。
+            text = "@/Users/me/proj/src/ ",
             isDirectory = true,
         )
         val decoded = JsonCodec.decodeObject(SelectionPayload.json("dir-1", 1L, submit = false, selection = directory))
@@ -56,7 +57,7 @@ class SelectionPayloadTest {
         assertEquals(null, decoded["language"])
         assertEquals(0L, decoded["lineStart"])
         assertEquals(0L, decoded["lineEnd"])
-        assertEquals("@/Users/me/proj/src ", decoded["text"])
+        assertEquals("@/Users/me/proj/src/ ", decoded["text"])
     }
 
     @Test

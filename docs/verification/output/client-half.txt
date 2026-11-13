@@ -53,9 +53,21 @@ PASS  a exploded chip channel still delivers flat text
 PASS  a exploded chip channel is still acknowledged
 PASS  exactly one insertion even though submit throws
 PASS  the message is still acknowledged (content is in the composer)
+PASS  the folder chip serializes back to the contract text
+PASS  a directory asks for exactly one reference chip
+PASS  the directory chip is a folder-appearance mention with the trailing slash
+PASS  a folder chip never carries a #L range
+PASS  a folder chip is not duplicated as flat text
+PASS  a directory message is acknowledged
+PASS  flat-text fallback rebuilds an old directory message with the trailing slash
+PASS  the normalized directory message is acknowledged
+PASS  a spaced folder chip serializes back to a slash-terminated quoted mention
+PASS  a spaced directory mention is quoted and slash-terminated
+PASS  a spaced directory chip keeps the folder appearance and label
+PASS  a spaced directory message is acknowledged
 PASS  unmount clears every poll timer (host sweeper heartbeat exempt)
 
-# fetch log (tail): GET /idea-bridge/pending, GET /idea-bridge/pending, POST /idea-bridge/claim, POST /idea-bridge/ack, GET /idea-bridge/pending, GET /idea-bridge/pending
+# fetch log (tail): POST /idea-bridge/ack, GET /idea-bridge/pending, GET /idea-bridge/pending, POST /idea-bridge/claim, POST /idea-bridge/ack, GET /idea-bridge/pending
 # inbox left: (empty)
 
-# summary: 56 passed, 0 failed, 0 product defect(s)
+# summary: 68 passed, 0 failed, 0 product defect(s)

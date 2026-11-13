@@ -52,7 +52,7 @@ object IdeaBridge {
         val text: String,
         /**
          * true = 选中的是项目树里的**目录**（契约 §3 的 `kind: "directory"`）。
-         * 目录没有行号，DSH 侧也不会为它插引用 chip（chip 的 `ref` 必须能当文件打开）。
+         * 目录没有行号，`text` 带尾随斜杠（DSH 的目录标记）；DSH 侧据此插入文件夹 chip。
          */
         val isDirectory: Boolean = false,
     )

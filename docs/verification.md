@@ -526,6 +526,8 @@ VERDICT: all harness assertions green (0 open product defect(s) flagged)
 `shell.insertReference` → `draftEditor.insertReference`，插入一个 chip 节点 + 尾随空格），
 `reference = { source:'reference', ref:'@<abs path>#L<a>[-<b>]', label:<文件名>, appearance:'file',
 clipboardText:<同 ref> }`。把行号塞在 `ref`/`clipboardText` 里，序列化文本与纯文本路径逐字节一致。
+（注：2.1.x 后续已改为 chip 的 `ref`/`clipboardText` 只带干净路径，行号作为 chip 之后的一段独立
+文本插入；见下方 2026-11-13 追加。下文“`clipboardText === ref`”的断言已随该改动更新。）
 chip 通道不存在 / 返回非 true / 抛错 → 退回 `insertText`。补空格改为独立的一次编辑（chip 不带前导空格）。
 
 验证脚本新增：chip 被接受时不发生纯文本插入且请求形状正确、`clipboardText === ref`、
@@ -533,3 +535,29 @@ chip 被拒/抛错时仍以纯文本投递并 ack、pad 作为独立编辑。
 `client-half.test.mjs` 从 42 → **53 条断言全绿**；`run-all.sh` 整体
 61×3 + 53 + 42 + 反查 = **0 failed / 0 open defect**。
 **真实客户端里 chip 是否被接受（是否渲染为文件标签、是否因 `#L` 被判无效）仍未验证**——需用户在输入框里看一眼。
+
+## 追加：文件夹引用（尾随斜杠 + folder chip）（2026-11-13）
+
+用户反馈：文件夹路径进入 DSH 后没有按 DSH 的目录语法展示（手输 `@` 选文件夹会得到
+`📁 dsh-plugin/` 的文件夹 chip，桥接投递的却是裸文本路径）。调查本机运行中的 DSH（`app.asar` 内
+`@deepseek-ai/dsh-file-reference/lib/types/grammar.js` 的 `formatFileMention`、
+`@deepseek-ai/dsh-client-ui-reference/lib/client.js` 的 `folderReferenceRule` / `onPick`、
+`@deepseek-ai/dsh-client-ui-conversation/lib/client.js` 的 `ReferenceChip`）确认：
+**尾随斜杠是 DSH 的目录标记**（模型提示词原文 "A trailing slash marks a directory: list it
+when its contents matter"）；目录 chip 用 `appearance: "folder"`，且 `openReference` 对非
+`file` 外观直接返回 false，所以文件夹 chip 不会变成"文件不存在"的死引用。
+
+实现：
+- IDEA 侧 `SelectionText.format(..., isDirectory)`：目录文本为 `@<绝对路径>/ `（无行号）；
+  路径含空白时按 DSH mention 语法写成 `@"<绝对路径>/" `（文件同理 `@"<路径>"#L… `），
+  否则 DSH 的 `@[^\s]+` / `@"…"` 解析会把带空格的路径截断。
+- DSH 侧 client：`kind: "directory"` 插入 `appearance: "folder"` 的 chip（`ref` / `clipboardText`
+  为带斜杠 mention，`label` 为 `<目录名>/`，含空格时用引号形式）；chip 通道不可用时用 `file`
+  归一化出 `@<绝对路径>/ ` 纯文本。
+- 兼容：旧 IDEA 插件（目录 `text` 无斜杠）由新 client 归一化；新 IDEA 插件的带斜杠文本在旧
+  client 里作为纯文本发送，DSH 仍按 `folder` 文本规则渲染文件夹 chip。消息形状不变，契约升到 v1.3。
+
+验证：`client-half.test.mjs` 新增 12e/12f/12g（文件夹 chip 形状、旧消息归一化、含空格路径），
+66 条断言全绿；`host-half` 61×4、`claim-adversarial` 42 条全绿；Kotlin `SelectionTextTest`
+10 条 + `SelectionPayloadTest` 6 条全绿（`./gradlew test`）。活体页面里的视觉确认仍需在
+DSH 输入框里看一眼（本报告只覆盖源码级与 harness 级）。

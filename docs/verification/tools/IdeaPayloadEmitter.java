@@ -29,7 +29,7 @@ public final class IdeaPayloadEmitter {
         boolean submit = Boolean.parseBoolean(args[7]);
         boolean isDirectory = args.length > 8 && "directory".equals(args[8]);
 
-        String text = SelectionText.INSTANCE.format(filePath, lineStart, lineEnd);
+        String text = SelectionText.INSTANCE.format(filePath, lineStart, lineEnd, isDirectory);
         IdeaBridge.Selection selection =
                 new IdeaBridge.Selection(projectPath, filePath, language, lineStart, lineEnd, text, isDirectory);
         System.out.println(SelectionPayload.INSTANCE.json(id, createdAt, submit, selection));

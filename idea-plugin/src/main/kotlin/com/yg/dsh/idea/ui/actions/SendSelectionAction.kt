@@ -86,7 +86,9 @@ class SendSelectionAction : AnAction(I18nBundle.message("action.sendSelection"))
                     return@executeOnPooledThread
                 }
 
-                texts = selections.map { SelectionText.format(it.filePath, it.lineStart, it.lineEnd) }
+                texts = selections.map {
+                    SelectionText.format(it.filePath, it.lineStart, it.lineEnd, it.isDirectory)
+                }
                 // 直接把真正投递出去的引用格式（含行号）写进 idea.log：排查“只发文件、不带行号”
                 // 时不用再抓收件箱或装调试包（信息级，随 Help → Show Log 即可看到）。
                 LOG.info(
@@ -211,7 +213,8 @@ class SendSelectionAction : AnAction(I18nBundle.message("action.sendSelection"))
                     filePath = vf.path.replace('\\', '/'),
                     // 目录没有语言；文件仍按 PSI/扩展名给出语言，仅供 DSH 侧提示。
                     language = if (isDirectory) null else LanguageDetector.languageOf(vf, project),
-                    // 文件/文件夹路径引用不带行号：`@/path/to/Thing `。
+                    // 文件/文件夹路径引用不带行号：文件 `@/path/to/Thing `，
+                    // 目录 `@/path/to/folder/ `（尾随斜杠是 DSH 的目录标记，见 SelectionText）。
                     lineStart = 0,
                     lineEnd = 0,
                     isDirectory = isDirectory,

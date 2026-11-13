@@ -3,7 +3,7 @@
 ## Project Overview
 
 一个 Kotlin IntelliJ Platform 插件，**只做一件事**：把编辑器里的选中代码 / 项目树里选中的文件或
-文件夹以固定引用格式 `@<绝对路径>#L<起>[-<止>]`（文件/文件夹为 `@<绝对路径>`）投递到
+文件夹以固定引用格式 `@<绝对路径>#L<起>[-<止>]`（文件为 `@<绝对路径>`，目录为 `@<绝对路径>/`——尾随斜杠是 DSH 的目录标记）投递到
 **用户已经打开着的** DeepSeek Harness（桌面客户端或网页）。
 
 它**不启动、不内嵌、不管理**任何 DSH 进程：没有 Node.js/DSH 路径设置，没有 JCEF 浏览器，
@@ -11,7 +11,7 @@
 
 投递方式是往 `$DSH_HOME/idea-bridge/inbox` 写一个很小的 JSON 文件（原子写、0600），
 由同仓库的 DSH 侧插件 `dsh-plugin/`（npm 包名仍为 `@local/dsh-idea-bridge`）读取并写进 composer。
-**字段级契约见 [`docs/idea-bridge-contract.md`](docs/idea-bridge-contract.md)（v1.2，冻结）**——
+**字段级契约见 [`docs/idea-bridge-contract.md`](docs/idea-bridge-contract.md)（v1.3，冻结）**——
 改任何一侧的字段都必须同步改契约并在两侧同时改。
 
 ## Build & Test
@@ -34,7 +34,7 @@ cd idea-plugin
   -PlocalIdePath="/Applications/IntelliJ IDEA.app/Contents"
 ```
 
-产物：`idea-plugin/build/distributions/dsh-idea-plugin-<version>.zip`（当前 2.1.3）
+产物：`idea-plugin/build/distributions/dsh-idea-plugin-<version>.zip`（当前 2.1.4）
 
 沙箱提示：Gradle 必须写 `~/.gradle`（wrapper 锁、依赖缓存、toolchain）。若会话是
 workspace-write 沙箱，这条命令会被拒；需要 danger-full-access。
@@ -98,7 +98,7 @@ idea-plugin/src/main/kotlin/com/yg/dsh/idea/
 │   ├── BridgeSettings.kt    # 持久化：inboxDirOverride / submit / focusDshAfterSend（applicationService）
 │   ├── IdeaBridge.kt        # 解析收件箱（location.json 握手）→ 原子写消息文件（0600）；focusDsh()
 │   ├── SelectionPayload.kt  # 消息文件的 JSON 形状（契约 §3），独立可测
-│   └── SelectionText.kt     # 固定引用格式 @path#L10-20 + 尾随空格
+│   └── SelectionText.kt     # 固定引用格式 @path#L10-20；目录 @path/ + 尾随空格
 ├── i18n/I18nBundle.kt       # DynamicBundle 包装
 ├── settings/DshBridgeConfigurable.kt  # Settings → Tools → DeepSeek Harness Bridge（3 个开关/字段）
 ├── ui/actions/SendSelectionAction.kt  # 唯一入口：Ctrl+Alt+K / 编辑器右键 / 项目树右键（文件或文件夹，多选逐条）；失败回退剪贴板
@@ -124,13 +124,14 @@ dsh-plugin/                # DSH 侧插件（纯 ESM JS，无构建步骤）
 ```
 IDEA: Ctrl+Alt+K（或项目树右键发送路径）
   → SendSelectionAction（ReadAction.nonBlocking 取路径/语言/行号；项目树取 VIRTUAL_FILE_ARRAY）
-  → SelectionText.format → "@/path/File.kt#L10-20 " / "@/path/to/folder "（kind=directory）
+  → SelectionText.format → "@/path/File.kt#L10-20 " / "@/path/to/folder/ "（kind=directory）
   → IdeaBridge.send（SelectionPayload.json，临时文件 + ATOMIC_MOVE，0600）
   → $DSH_HOME/idea-bridge/inbox/<uuid>.json
 DSH: host 半 GET /idea-bridge/pending（不消费）
   → client 半**严格路由**：只挑 cwd 与 projectPath 相同的会话，其余跳过且不 ack
   → POST /idea-bridge/claim（原子领取，防双实例重复投递）
-  → 插入到光标处（绝不覆盖已有草稿；文件优先插入引用 chip，失败退回纯文本；目录永远只插纯文本；必要时补分隔空格）
+  → 插入到光标处（绝不覆盖已有草稿；文件/目录都优先插入引用 chip——文件 appearance=file，
+    目录 appearance=folder（文件夹 chip）——失败退回纯文本；必要时补分隔空格）
   → submit=true 时再 inputActions.submit()（默认 false＝只填草稿）
   → POST /idea-bridge/ack {ids:[...]} → 删除 <id>.json 与 <id>.claim（幂等）
 IDEA: 盯自己的消息文件 ≤3.5s 判定结果 —— .claim 出现=已领取、.json 消失=已投递、
@@ -156,7 +157,7 @@ IDEA: 盯自己的消息文件 ≤3.5s 判定结果 —— .claim 出现=已领�
 | -------------------------------------------- | ------------------------------------------------ |
 | `$DSH_HOME/idea-bridge/location.json`        | DSH 侧握手文件（`inboxDir`、pid、心跳 updatedAt） |
 | `$DSH_HOME/idea-bridge/inbox/<uuid>.json`    | 一条待投递消息（契约 §3）                        |
-| `docs/idea-bridge-contract.md`               | 冻结的字段级契约 v1.2                            |
+| `docs/idea-bridge-contract.md`               | 冻结的字段级契约 v1.3                            |
 | `docs/updatePlugins.xml`                     | 给 IDEA 的索引（Pages 站点根；workflow 维护） |
 | `docs/downloads/`                            | Pages 上托管的插件 zip（只保留最新一版） |
 | `updatePlugins.xml`                          | 索引副本（raw 备用） |

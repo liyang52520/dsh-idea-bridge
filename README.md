@@ -6,14 +6,14 @@
 > `dsh-plugin/` (the DSH-side plugin, npm package `@local/dsh-idea-bridge`).
 
 **只做一件事**：把你在 IntelliJ IDEA 中选中的代码（或项目树里选中的文件/文件夹），以固定引用格式
-`@/path/File.kt#L10-20` / `@/path/to/Folder` 发送到**你已经打开着的** DeepSeek Harness（桌面客户端或网页）。
+`@/path/File.kt#L10-20` / `@/path/to/Folder/` 发送到**你已经打开着的** DeepSeek Harness（桌面客户端或网页）。
 
 > v2.0.0 起战略收敛：插件**不再**启动、内嵌或管理任何 DSH 进程，不再有内嵌 Web UI、
 > IDE MCP 端点、评审/快照、服务商配置与凭据同步。约 7000 行 → 约 600 行。
 
 One job only: send the code you selected in IntelliJ IDEA — or the file/folder you selected in the
 Project view — to the DeepSeek Harness window you already have open, as the fixed reference
-`@/path/File.kt#L10-20` (paths without line numbers).
+`@/path/File.kt#L10-20` / `@/path/to/Folder/` (a trailing slash marks a folder).
 
 > 声明 / Disclaimer：本插件非 DeepSeek 官方产品；DeepSeek Harness 与 DeepSeek 商标归其各自所有者。
 > This plugin is not an official DeepSeek product; DeepSeek Harness and the DeepSeek trademark belong
@@ -26,7 +26,7 @@ Project view — to the DeepSeek Harness window you already have open, as the fi
 ```
 IDEA 插件 (idea-plugin/)            文件系统                        DSH 侧插件 (dsh-plugin/)
 Ctrl+Alt+K  ──写一条 JSON──▶  ~/.dsh/idea-bridge/inbox/*.json  ──▶  host 半：GET /idea-bridge/pending
-                                                                     client 半：写进 composer（可自动提交）
+                                                                     client 半：插入 composer 的引用 chip / 纯文本（可自动提交）
 ```
 
 IDEA 插件只往收件箱写一个很小的 JSON 文件（原子写、0600），不读凭据、不伪造 cookie、不调用
@@ -46,7 +46,7 @@ DSH 内部 API、不启动任何进程。DSH 侧插件用 DSH 自己的公开扩
    DSH profile（桌面客户端与网页 profile 各一次），重启 DeepSeek Harness。
 3. 在 DeepSeek Harness 里打开与 IDEA 相同的项目目录；在 IDEA 中选中代码按 **Ctrl+Alt+K**。
    要发送整个文件或文件夹，就在项目树里右键 → **发送文件/文件夹路径到 DSH**，或让项目树获得焦点后
-   按同一个 **Ctrl+Alt+K**（多选时每个条目各发一条；目录只发 `@/path/to/folder ` 纯文本）。
+   按同一个 **Ctrl+Alt+K**（多选时每个条目各发一条；目录发 `@/path/to/folder/ `，尾随斜杠是目录标记，在 DSH 里显示为文件夹 chip）。
 
 ### 从 GitHub 更新（可选）/ Update from GitHub (optional)
 

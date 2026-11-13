@@ -49,6 +49,12 @@ const mod = await import(pathToFileURL(join(REPO, 'dsh-plugin', 'index.js')).hre
   await mod.apply(a.ctx);
   const b = makeCtx();
   let error;
+  // Separate the two activations by a few ms: the ownership guard compares
+  // handshake bytes, and a same-millisecond write produces identical bytes
+  // (same pid + same updatedAt), which is indistinguishable from the old
+  // activation's file. That same-ms collision is covered by section 3 below
+  // for apply(); ownership here means the realistic reload case.
+  await new Promise((resolve) => setTimeout(resolve, 5));
   const t0 = Date.now();
   try { await mod.apply(b.ctx); } catch (e) { error = e; }
   check('sequential re-apply in one process does not throw', error === undefined, String(error));

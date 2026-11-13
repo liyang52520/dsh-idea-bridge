@@ -2,9 +2,9 @@ $ grep -rn 'DshApiClient|ProcessManager|IdeMcpServer|DshSessionLauncher|PortPars
 idea-plugin/build.gradle.kts:37:    // 见 docs/PROJECT_NOTES.md）。本插件不再使用 JCEF（内嵌浏览器已随战略收敛删除），
 
 $ grep -rn 'ProcessBuilder|Runtime.getRuntime|child_process|spawn(' idea-plugin/src dsh-plugin
-idea-plugin/src/main/kotlin/com/yg/dsh/idea/bridge/IdeaBridge.kt:202:            ProcessBuilder("open", "dsh://open")
-idea-plugin/src/main/kotlin/com/yg/dsh/idea/bridge/IdeaBridge.kt:203:                .redirectOutput(ProcessBuilder.Redirect.DISCARD)
-idea-plugin/src/main/kotlin/com/yg/dsh/idea/bridge/IdeaBridge.kt:204:                .redirectError(ProcessBuilder.Redirect.DISCARD)
+idea-plugin/src/main/kotlin/com/yg/dsh/idea/bridge/IdeaBridge.kt:230:            ProcessBuilder("open", "dsh://open")
+idea-plugin/src/main/kotlin/com/yg/dsh/idea/bridge/IdeaBridge.kt:231:                .redirectOutput(ProcessBuilder.Redirect.DISCARD)
+idea-plugin/src/main/kotlin/com/yg/dsh/idea/bridge/IdeaBridge.kt:232:                .redirectError(ProcessBuilder.Redirect.DISCARD)
 
 $ grep -rn 'credentials.yaml|/api/' idea-plugin/src dsh-plugin
 dsh-plugin/index.js:26: * It never reads credentials, never calls `/api/*`, never starts a process,
